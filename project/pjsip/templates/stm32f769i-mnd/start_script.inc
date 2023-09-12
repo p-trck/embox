@@ -3,5 +3,5 @@
 "conf_setup",
 "netmanager",
 //"flash_settings restore",
-"ntpdate 0.europe.pool.ntp.org",
+//"ntpdate 0.europe.pool.ntp.org",
 "service httpd http_admin",
