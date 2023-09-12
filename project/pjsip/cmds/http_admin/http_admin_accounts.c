@@ -18,9 +18,9 @@
 #include <kernel/printk.h>
 #include <hal/arch.h>
 
-extern char *get_sip_acc_domain(void);
-extern char *get_sip_acc_user(void);
-extern char *get_sip_acc_passwd(void);
+//extern char *get_sip_acc_domain(void);
+//extern char *get_sip_acc_user(void);
+//extern char *get_sip_acc_passwd(void);
 extern void store_sip_account(char *domain, char *user, char *passwd);
 
 static char *http_admin_build_accounts_list(void) {
@@ -46,11 +46,11 @@ static char *http_admin_build_accounts_list(void) {
 
 	cJSON_AddStringToObject(account_obj, "name", "main account");
 
-	cJSON_AddStringToObject(account_obj, "sip_domain", get_sip_acc_domain());
+	cJSON_AddStringToObject(account_obj, "sip_domain", "mnd");
 
-	cJSON_AddStringToObject(account_obj, "sip_user", get_sip_acc_user());
+	cJSON_AddStringToObject(account_obj, "sip_user", "usr");
 
-	cJSON_AddStringToObject(account_obj, "sip_password", get_sip_acc_passwd());
+	cJSON_AddStringToObject(account_obj, "sip_password", "pwd");
 
 	json_list = cJSON_PrintUnformatted(accounts_array);
 
@@ -96,7 +96,8 @@ static void http_admin_post(char *post_data) {
 		user = cJSON_GetObjectString(acount_desc, "sip_user");
 		passwd = cJSON_GetObjectString(acount_desc, "sip_password");
 
-		store_sip_account(domain, user, passwd);
+		//store_sip_account(domain, user, passwd);
+		printf("domain = %s, user = %s, pw = %s\r\n", domain, user, passwd);
 	}
 	cJSON_Delete(post_json);
 	return;
