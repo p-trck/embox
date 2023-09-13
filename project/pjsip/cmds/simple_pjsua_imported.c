@@ -15,6 +15,8 @@
 
 #include <simple_pjsua_sip_account.inc>
 
+#include <drivers/gpio/gpio.h>
+
 #define THIS_FILE	"APP"
 
 #define PJ_MAX_PORTS 16
@@ -26,6 +28,9 @@
 #define MM_SET_HEAP(type, prev_type) \
 	(void) prev_type
 #endif
+
+#define LED1_PIN        (1 << 13)
+#define LED2_PIN        (1 << 5)
 
 static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 				pjsip_rx_data *rdata) {
@@ -55,6 +60,15 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e) {
 	PJ_LOG(3,(THIS_FILE, "Call %d state=%.*s", call_id,
 			 (int)ci.state_text.slen,
 			 ci.state_text.ptr));
+
+	if(ci.state == PJSIP_INV_STATE_DISCONNECTED)
+	{
+		gpio_set(GPIO_PORT_J, LED2_PIN, GPIO_PIN_LOW);
+	}
+	else if (ci.state == PJSIP_INV_STATE_CONFIRMED)
+	{
+		gpio_set(GPIO_PORT_J, LED2_PIN, GPIO_PIN_HIGH);
+	}
 }
 
 static void print_available_conf_ports(void) {
@@ -177,6 +191,11 @@ int main(int argc, char *argv[]) {
 
 	register_acc(&acc_id);
 
+	gpio_setup_mode(GPIO_PORT_J, LED1_PIN, GPIO_MODE_OUT);
+    gpio_setup_mode(GPIO_PORT_J, LED2_PIN, GPIO_MODE_OUT);
+	gpio_set(GPIO_PORT_J, LED1_PIN, GPIO_PIN_HIGH);
+	gpio_set(GPIO_PORT_J, LED2_PIN, GPIO_PIN_LOW);
+
 	/* If URL is specified, make call to the URL. */
 	if (argc > 1) {
 		pj_str_t uri = pj_str(argv[1]);
@@ -213,6 +232,7 @@ int main(int argc, char *argv[]) {
 	/* Destroy pjsua */
 	pjsua_destroy();
 	MM_SET_HEAP(HEAP_RAM, NULL);
+	gpio_set(GPIO_PORT_J, LED1_PIN, GPIO_PIN_LOW);
 
 	return 0;
 }
