@@ -30,10 +30,10 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef *heth) {
 	 RMII_MII_CRS_DV -------------------> PA7
 	 RMII_MII_RXD0 ---------------------> PC4
 	 RMII_MII_RXD1 ---------------------> PC5
-	 RMII_MII_RXER ---------------------> PG2
-	 RMII_MII_TX_EN --------------------> PG11
-	 RMII_MII_TXD0 ---------------------> PG13
-	 RMII_MII_TXD1 ---------------------> PG14
+	 RMII_MII_RXER ---------------------> PB9
+	 RMII_MII_TX_EN --------------------> PB11
+	 RMII_MII_TXD0 ---------------------> PB12
+	 RMII_MII_TXD1 ---------------------> PB13
 	 */
 
 	/* Ethernet pins configuration ************************************************/
@@ -73,16 +73,15 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef *heth) {
 	GPIO_InitStructure.Pin = GPIO_PIN_1 | GPIO_PIN_4 | GPIO_PIN_5;
 	HAL_GPIO_Init(GPIOC, &GPIO_InitStructure);
 
-	/* Configure PG2, PG11, PG13 and PG14 */
-	__HAL_RCC_GPIOG_CLK_ENABLE();
+	__HAL_RCC_GPIOB_CLK_ENABLE();
 #if !defined(USE_STM32F7XX_NUCLEO_144)
-	/* Configure PG2, PG11, PG13 and PG14 */
-	GPIO_InitStructure.Pin =
-			GPIO_PIN_2 | GPIO_PIN_11 | GPIO_PIN_13 | GPIO_PIN_14;
+	/* Configure PB11, PB12 and PB13 */
+	GPIO_InitStructure.Pin = GPIO_PIN_9 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13;
 #else
+	/* Configure PG2, PG11, PG13 and PG14 */
 	  GPIO_InitStructure.Pin =  GPIO_PIN_2 | GPIO_PIN_11 | GPIO_PIN_13;
 #endif
-	HAL_GPIO_Init(GPIOG, &GPIO_InitStructure);
+	HAL_GPIO_Init(GPIOB, &GPIO_InitStructure);
 
 	/* Enable ETHERNET clock  */
 	__HAL_RCC_ETH_CLK_ENABLE();
