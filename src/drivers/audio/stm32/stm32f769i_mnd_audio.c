@@ -18,11 +18,11 @@
 static_assert(STM32_AUDIO_OUT_DMA_IRQ == AUDIO_OUT_SAIx_DMAx_IRQ, "");
 
 /* Audio Input interrupts */
-#define STM32_DFSDM_TOP_LEFT_IRQ      OPTION_GET(NUMBER, dfsdm_top_left_irq)
-static_assert(STM32_DFSDM_TOP_LEFT_IRQ == DMA2_Stream0_IRQn, "");
+#define STM32_DFSDM_BOTTOM_LEFT_IRQ   OPTION_GET(NUMBER, dfsdm_bottom_left_irq)
+static_assert(STM32_DFSDM_BOTTOM_LEFT_IRQ == DMA2_Stream6_IRQn, "");
 
-#define STM32_DFSDM_TOP_RIGHT_IRQ     OPTION_GET(NUMBER, dfsdm_top_right_irq)
-static_assert(STM32_DFSDM_TOP_RIGHT_IRQ == DMA2_Stream5_IRQn, "");
+#define STM32_DFSDM_BOTTOM_RIGHT_IRQ  OPTION_GET(NUMBER, dfsdm_bottom_right_irq)
+static_assert(STM32_DFSDM_BOTTOM_RIGHT_IRQ == DMA2_Stream7_IRQn, "");
 
 #define SCRATCH_BUFF_SIZE 1024
 static int32_t audio_scratch_buffer[SCRATCH_BUFF_SIZE] SRAM_NOCACHE_SECTION;
@@ -35,21 +35,21 @@ static irq_return_t stm32_audio_out_dma_irq(unsigned int irq_num,
 }
 STATIC_IRQ_ATTACH(STM32_AUDIO_OUT_DMA_IRQ, stm32_audio_out_dma_irq, NULL);
 
-static irq_return_t stm32_dfsdm_top_left_irq(unsigned int irq_num,
+static irq_return_t stm32_dfsdm_bottom_left_irq(unsigned int irq_num,
 		void *audio_dev) {
-	extern DFSDM_Filter_HandleTypeDef hAudioInTopLeftFilter;
-	HAL_DMA_IRQHandler(hAudioInTopLeftFilter.hdmaReg);
+	extern DFSDM_Filter_HandleTypeDef hAudioInButtomLeftFilter;
+	HAL_DMA_IRQHandler(hAudioInButtomLeftFilter.hdmaReg);
 	return IRQ_HANDLED;
 }
-STATIC_IRQ_ATTACH(STM32_DFSDM_TOP_LEFT_IRQ, stm32_dfsdm_top_left_irq, NULL);
+STATIC_IRQ_ATTACH(STM32_DFSDM_BOTTOM_LEFT_IRQ, stm32_dfsdm_bottom_left_irq, NULL);
 
-static irq_return_t stm32_dfsdm_top_right_irq(unsigned int irq_num,
+static irq_return_t stm32_dfsdm_bottom_right_irq(unsigned int irq_num,
 		void *audio_dev) {
-	extern DFSDM_Filter_HandleTypeDef hAudioInTopRightFilter;
-	HAL_DMA_IRQHandler(hAudioInTopRightFilter.hdmaReg);
+	extern DFSDM_Filter_HandleTypeDef hAudioInButtomRightFilter;
+	HAL_DMA_IRQHandler(hAudioInButtomRightFilter.hdmaReg);
 	return IRQ_HANDLED;
 }
-STATIC_IRQ_ATTACH(STM32_DFSDM_TOP_RIGHT_IRQ, stm32_dfsdm_top_right_irq, NULL);
+STATIC_IRQ_ATTACH(STM32_DFSDM_BOTTOM_RIGHT_IRQ, stm32_dfsdm_bottom_right_irq, NULL);
 
 int stm32f7_audio_init(void) {
 	if (0 != irq_attach(STM32_AUDIO_OUT_DMA_IRQ,
@@ -57,14 +57,14 @@ int stm32f7_audio_init(void) {
 				0, NULL, "stm32_audio_out")) {
 		log_error("irq_attach error");
 	}
-	if (0 != irq_attach(STM32_DFSDM_TOP_LEFT_IRQ,
-				stm32_dfsdm_top_left_irq,
-				0, NULL, "stm32_audio_in_top_left")) {
+	if (0 != irq_attach(STM32_DFSDM_BOTTOM_LEFT_IRQ,
+				stm32_dfsdm_bottom_left_irq,
+				0, NULL, "stm32_audio_in_bottom_left")) {
 		log_error("irq_attach error");
 	}
-	if (0 != irq_attach(STM32_DFSDM_TOP_RIGHT_IRQ,
-				stm32_dfsdm_top_right_irq,
-				0, NULL, "stm32_audio_in_top_right")) {
+	if (0 != irq_attach(STM32_DFSDM_BOTTOM_RIGHT_IRQ,
+				stm32_dfsdm_bottom_right_irq,
+				0, NULL, "stm32_audio_in_bottom_right")) {
 		log_error("irq_attach error");
 	}
 
