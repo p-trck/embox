@@ -142,8 +142,8 @@
 #define AUDIO_IN_INT_IRQ                         EXTI15_10_IRQn
 
 /* DFSDM Configuration defines */
-#define AUDIO_DFSDMx_TOP_RIGHT_CHANNEL                  DFSDM_CHANNEL_0
-#define AUDIO_DFSDMx_TOP_LEFT_CHANNEL                   DFSDM_CHANNEL_1
+#define AUDIO_DFSDMx_TOP_RIGHT_CHANNEL                  DFSDM_CHANNEL_4
+#define AUDIO_DFSDMx_TOP_LEFT_CHANNEL                   DFSDM_CHANNEL_5
 #define AUDIO_DFSDMx_BUTTOM_RIGHT_CHANNEL               DFSDM_CHANNEL_4
 #define AUDIO_DFSDMx_BUTTOM_LEFT_CHANNEL                DFSDM_CHANNEL_5
 
@@ -156,7 +156,7 @@
 #define AUDIO_DFSDMx_CKOUT_PIN                          GPIO_PIN_3
 #define AUDIO_DFSDMx_CKOUT_DMIC_GPIO_PORT               GPIOD    
 #define AUDIO_DFSDMx_CKOUT_DMIC_GPIO_CLK_ENABLE()       __HAL_RCC_GPIOD_CLK_ENABLE()
-#define AUDIO_DFSDMx_DMIC_DATIN1_PIN                    GPIO_PIN_3
+#define AUDIO_DFSDMx_DMIC_DATIN1_PIN                    GPIO_PIN_11
 #define AUDIO_DFSDMx_DMIC_DATIN5_PIN                    GPIO_PIN_11   
 #define AUDIO_DFSDMx_DMIC_DATIN_GPIO_PORT               GPIOC
 #define AUDIO_DFSDMx_DMIC_DATIN_GPIO_CLK_ENABLE()       __HAL_RCC_GPIOC_CLK_ENABLE()

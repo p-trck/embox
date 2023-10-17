@@ -1730,9 +1730,9 @@ static uint8_t DFSDMx_Init(uint32_t AudioFreq)
   /****************************************************************************/ 
   /********************** Channels configuration  *****************************/
   /****************************************************************************/ 
-  /* CHANNEL 1 configuration */
+  /* CHANNEL 5 configuration */
   __HAL_DFSDM_CHANNEL_RESET_HANDLE_STATE(&hAudioInTopLeftChannel);  
-  hAudioInTopLeftChannel.Instance                      = DFSDM1_Channel1;  
+  hAudioInTopLeftChannel.Instance                      = DFSDM1_Channel5;  
   hAudioInTopLeftChannel.Init.OutputClock.Activation   = ENABLE;
   hAudioInTopLeftChannel.Init.OutputClock.Selection    = DFSDM_CHANNEL_OUTPUT_CLOCK_AUDIO;
   /* Set the DFSDM clock OUT audio frequency configuration */
@@ -1752,9 +1752,9 @@ static uint8_t DFSDMx_Init(uint32_t AudioFreq)
     return AUDIO_ERROR;
   }
   
-  /* CHANNEL 0 configuration */
+  /* CHANNEL 4 configuration */
   __HAL_DFSDM_CHANNEL_RESET_HANDLE_STATE(&hAudioInTopRightChannel);  
-  hAudioInTopRightChannel.Instance                      = DFSDM1_Channel0;  
+  hAudioInTopRightChannel.Instance                      = DFSDM1_Channel4;  
   hAudioInTopRightChannel.Init.OutputClock.Activation   = ENABLE;
   hAudioInTopRightChannel.Init.OutputClock.Selection    = DFSDM_CHANNEL_OUTPUT_CLOCK_AUDIO;
   /* Set the DFSDM clock OUT audio frequency configuration */

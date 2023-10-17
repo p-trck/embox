@@ -18,6 +18,12 @@
 static_assert(STM32_AUDIO_OUT_DMA_IRQ == AUDIO_OUT_SAIx_DMAx_IRQ, "");
 
 /* Audio Input interrupts */
+#define STM32_DFSDM_TOP_LEFT_IRQ      OPTION_GET(NUMBER, dfsdm_top_left_irq)
+static_assert(STM32_DFSDM_TOP_LEFT_IRQ == DMA2_Stream0_IRQn, "");
+
+#define STM32_DFSDM_TOP_RIGHT_IRQ     OPTION_GET(NUMBER, dfsdm_top_right_irq)
+static_assert(STM32_DFSDM_TOP_RIGHT_IRQ == DMA2_Stream5_IRQn, "");
+
 #define STM32_DFSDM_BOTTOM_LEFT_IRQ   OPTION_GET(NUMBER, dfsdm_bottom_left_irq)
 static_assert(STM32_DFSDM_BOTTOM_LEFT_IRQ == DMA2_Stream6_IRQn, "");
 
@@ -34,6 +40,22 @@ static irq_return_t stm32_audio_out_dma_irq(unsigned int irq_num,
 	return IRQ_HANDLED;
 }
 STATIC_IRQ_ATTACH(STM32_AUDIO_OUT_DMA_IRQ, stm32_audio_out_dma_irq, NULL);
+
+static irq_return_t stm32_dfsdm_top_left_irq(unsigned int irq_num,
+		void *audio_dev) {
+	extern DFSDM_Filter_HandleTypeDef hAudioInTopLeftFilter;
+	HAL_DMA_IRQHandler(hAudioInTopLeftFilter.hdmaReg);
+	return IRQ_HANDLED;
+}
+STATIC_IRQ_ATTACH(STM32_DFSDM_TOP_LEFT_IRQ, stm32_dfsdm_top_left_irq, NULL);
+
+static irq_return_t stm32_dfsdm_top_right_irq(unsigned int irq_num,
+		void *audio_dev) {
+	extern DFSDM_Filter_HandleTypeDef hAudioInTopRightFilter;
+	HAL_DMA_IRQHandler(hAudioInTopRightFilter.hdmaReg);
+	return IRQ_HANDLED;
+}
+STATIC_IRQ_ATTACH(STM32_DFSDM_TOP_RIGHT_IRQ, stm32_dfsdm_top_right_irq, NULL);
 
 static irq_return_t stm32_dfsdm_bottom_left_irq(unsigned int irq_num,
 		void *audio_dev) {
@@ -55,6 +77,16 @@ int stm32f7_audio_init(void) {
 	if (0 != irq_attach(STM32_AUDIO_OUT_DMA_IRQ,
 				stm32_audio_out_dma_irq,
 				0, NULL, "stm32_audio_out")) {
+		log_error("irq_attach error");
+	}
+	if (0 != irq_attach(STM32_DFSDM_TOP_LEFT_IRQ,
+				stm32_dfsdm_top_left_irq,
+				0, NULL, "stm32_audio_in_top_left")) {
+		log_error("irq_attach error");
+	}
+	if (0 != irq_attach(STM32_DFSDM_TOP_RIGHT_IRQ,
+				stm32_dfsdm_top_right_irq,
+				0, NULL, "stm32_audio_in_top_right")) {
 		log_error("irq_attach error");
 	}
 	if (0 != irq_attach(STM32_DFSDM_BOTTOM_LEFT_IRQ,
