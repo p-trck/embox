@@ -73,13 +73,15 @@ module stm32f769i_mnd {
 	option number volume = 70
 	option number audio_buf_len = 4096
 	option number audio_out_dma_irq      = 57
+	option number dfsdm_top_left_irq     = 56
+	option number dfsdm_top_right_irq    = 68
 	option number dfsdm_bottom_left_irq  = 69
 	option number dfsdm_bottom_right_irq = 70
 
 	@IncludeExport(path="drivers/audio", target_name="stm32f7_audio.h")
 	source "stm32f769i_mnd_audio.h"
 
-	source "stm32_audio_f7_mnd.c",
+	source "stm32_audio_f7.c",
 			"stm32f769i_mnd_audio.c"
 
 	depends embox.driver.audio.portaudio_lib
