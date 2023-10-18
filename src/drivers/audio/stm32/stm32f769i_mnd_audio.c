@@ -23,13 +23,13 @@ static_assert(STM32_DFSDM_TOP_LEFT_IRQ == DMA2_Stream0_IRQn, "");
 
 #define STM32_DFSDM_TOP_RIGHT_IRQ     OPTION_GET(NUMBER, dfsdm_top_right_irq)
 static_assert(STM32_DFSDM_TOP_RIGHT_IRQ == DMA2_Stream5_IRQn, "");
-
+#if 0
 #define STM32_DFSDM_BOTTOM_LEFT_IRQ   OPTION_GET(NUMBER, dfsdm_bottom_left_irq)
 static_assert(STM32_DFSDM_BOTTOM_LEFT_IRQ == DMA2_Stream6_IRQn, "");
 
 #define STM32_DFSDM_BOTTOM_RIGHT_IRQ  OPTION_GET(NUMBER, dfsdm_bottom_right_irq)
 static_assert(STM32_DFSDM_BOTTOM_RIGHT_IRQ == DMA2_Stream7_IRQn, "");
-
+#endif
 #define SCRATCH_BUFF_SIZE 1024
 static int32_t audio_scratch_buffer[SCRATCH_BUFF_SIZE] SRAM_NOCACHE_SECTION;
 
@@ -56,7 +56,7 @@ static irq_return_t stm32_dfsdm_top_right_irq(unsigned int irq_num,
 	return IRQ_HANDLED;
 }
 STATIC_IRQ_ATTACH(STM32_DFSDM_TOP_RIGHT_IRQ, stm32_dfsdm_top_right_irq, NULL);
-
+#if 0
 static irq_return_t stm32_dfsdm_bottom_left_irq(unsigned int irq_num,
 		void *audio_dev) {
 	extern DFSDM_Filter_HandleTypeDef hAudioInButtomLeftFilter;
@@ -72,7 +72,7 @@ static irq_return_t stm32_dfsdm_bottom_right_irq(unsigned int irq_num,
 	return IRQ_HANDLED;
 }
 STATIC_IRQ_ATTACH(STM32_DFSDM_BOTTOM_RIGHT_IRQ, stm32_dfsdm_bottom_right_irq, NULL);
-
+#endif
 int stm32f7_audio_init(void) {
 	if (0 != irq_attach(STM32_AUDIO_OUT_DMA_IRQ,
 				stm32_audio_out_dma_irq,
@@ -89,6 +89,7 @@ int stm32f7_audio_init(void) {
 				0, NULL, "stm32_audio_in_top_right")) {
 		log_error("irq_attach error");
 	}
+#if 0
 	if (0 != irq_attach(STM32_DFSDM_BOTTOM_LEFT_IRQ,
 				stm32_dfsdm_bottom_left_irq,
 				0, NULL, "stm32_audio_in_bottom_left")) {
@@ -99,7 +100,7 @@ int stm32f7_audio_init(void) {
 				0, NULL, "stm32_audio_in_bottom_right")) {
 		log_error("irq_attach error");
 	}
-
+#endif
 	if (AUDIO_OK != BSP_AUDIO_IN_Init(BSP_AUDIO_FREQUENCY_16K,
 			DEFAULT_AUDIO_IN_BIT_RESOLUTION,
 			DEFAULT_AUDIO_IN_CHANNEL_NBR)) {
@@ -109,7 +110,7 @@ int stm32f7_audio_init(void) {
 	BSP_AUDIO_IN_AllocScratch(audio_scratch_buffer, SCRATCH_BUFF_SIZE);
 
 	if (AUDIO_OK != BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE, 
-			90, BSP_AUDIO_FREQUENCY_16K)) {
+			100, BSP_AUDIO_FREQUENCY_16K)) {
 		log_error("BSP_AUDIO_OUT_Init error");
 		return -1;
 	}
