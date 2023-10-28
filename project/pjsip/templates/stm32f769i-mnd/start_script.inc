@@ -1,3 +1,3 @@
 "netmanager",
-//"simple_pjsua_imported"
+"simple_pjsua_imported"
 
