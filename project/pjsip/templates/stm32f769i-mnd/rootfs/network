@@ -4,4 +4,3 @@ iface eth0 inet static
 	gateway 172.30.1.254
 	hwaddress aa:bb:cc:dd:ee:02
 
-iface eth0 inet static
