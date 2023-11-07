@@ -109,7 +109,7 @@ int stm32f7_audio_init(void) {
 	}
 	BSP_AUDIO_IN_AllocScratch(audio_scratch_buffer, SCRATCH_BUFF_SIZE);
 
-	if (AUDIO_OK != BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_HEADPHONE, 
+	if (AUDIO_OK != BSP_AUDIO_OUT_Init(OUTPUT_DEVICE_SPEAKER, 
 			100, BSP_AUDIO_FREQUENCY_16K)) {
 		log_error("BSP_AUDIO_OUT_Init error");
 		return -1;

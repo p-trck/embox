@@ -63,7 +63,7 @@ static void stm32_audio_out_activate(void) {
 	memset(&stm32_audio_out_bufs[0], 0, sizeof stm32_audio_out_bufs);
 	stm32_hw_out.stm32_audio_running = 0;
 
-	BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_02);
+	BSP_AUDIO_OUT_SetAudioFrameSlot(CODEC_AUDIOFRAME_SLOT_13);
 
 	BSP_AUDIO_OUT_SetVolume(STM32_DEFAULT_VOLUME);
 
