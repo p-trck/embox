@@ -1,0 +1,9 @@
+package embox.cmd.user
+
+@BuildArtifactPath(cppflags="-I$(SRC_DIR)/cmds/user/utils/")
+module utils {
+	source "utils.c"
+
+	depends embox.compat.posix.passwd
+	depends embox.compat.posix.passwd_db_dynamic
+}
