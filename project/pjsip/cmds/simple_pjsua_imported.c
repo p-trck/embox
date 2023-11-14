@@ -29,6 +29,7 @@
 	(void) prev_type
 #endif
 
+//#define LED_CONTROL
 #define LED1_PIN        (1 << 13)
 #define LED2_PIN        (1 << 5)
 
@@ -60,7 +61,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e) {
 	PJ_LOG(3,(THIS_FILE, "Call %d state=%.*s", call_id,
 			 (int)ci.state_text.slen,
 			 ci.state_text.ptr));
-
+#ifdef LED_CONTROL
 	if(ci.state == PJSIP_INV_STATE_DISCONNECTED)
 	{
 		gpio_set(GPIO_PORT_J, LED2_PIN, GPIO_PIN_LOW);
@@ -69,6 +70,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e) {
 	{
 		gpio_set(GPIO_PORT_J, LED2_PIN, GPIO_PIN_HIGH);
 	}
+#endif
 }
 
 static void print_available_conf_ports(void) {
@@ -191,10 +193,12 @@ int main(int argc, char *argv[]) {
 
 	register_acc(&acc_id);
 
+	#ifdef LED_CONTROL
 	gpio_setup_mode(GPIO_PORT_J, LED1_PIN, GPIO_MODE_OUT);
     gpio_setup_mode(GPIO_PORT_J, LED2_PIN, GPIO_MODE_OUT);
 	gpio_set(GPIO_PORT_J, LED1_PIN, GPIO_PIN_HIGH);
 	gpio_set(GPIO_PORT_J, LED2_PIN, GPIO_PIN_LOW);
+	#endif
 
 	/* If URL is specified, make call to the URL. */
 	if (argc > 1) {
@@ -232,7 +236,9 @@ int main(int argc, char *argv[]) {
 	/* Destroy pjsua */
 	pjsua_destroy();
 	MM_SET_HEAP(HEAP_RAM, NULL);
+	#ifdef LED_CONTROL
 	gpio_set(GPIO_PORT_J, LED1_PIN, GPIO_PIN_LOW);
+	#endif
 
 	return 0;
 }
