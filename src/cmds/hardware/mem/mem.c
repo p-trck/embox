@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <errno.h>
+#include <string.h>
 
 #define DEFAULT_LENGTH 0x4
 
@@ -32,6 +33,7 @@ enum access_type {
 enum operation_mode {
 	MEM_MODE_READ,
 	MEM_MODE_WRITE,
+	MEM_MODE_TEST,
 };
 
 static const char *fmts[] = {
@@ -69,6 +71,65 @@ static int parse_option(char *optarg, int opt, long unsigned int *number) {
 	return 0;
 }
 
+#define BUFFER_SIZE         ((uint32_t)0x2000)
+#define WRITE_READ_ADDR     ((uint32_t)0)
+
+static uint32_t *aTxBuffer = (uint32_t *)(0x60000000);
+static uint32_t *aRxBuffer = (uint32_t *)(0x60000000 + 0x8000);
+static uint32_t *aTestBuffer = (uint32_t *)(0x60000000 + 0x10000);
+
+static void Fill_Buffer(uint32_t *pBuffer, uint32_t uwBufferLenght, uint32_t uwOffset)
+{
+  uint32_t tmpIndex = 0;
+
+  /* Put in global buffer different values */
+  for (tmpIndex = 0; tmpIndex < uwBufferLenght; tmpIndex++ )
+  {
+    pBuffer[tmpIndex] = tmpIndex + uwOffset;
+  }
+}
+
+int memtest()
+{
+	uint32_t uwIndex = 0;
+	uint32_t uwWriteReadStatus = 0;
+
+	printf("Start Test\n");
+	Fill_Buffer(aTxBuffer, BUFFER_SIZE, 0xA244250F);
+
+    memset((void*) (aTestBuffer + WRITE_READ_ADDR), 0x5a, BUFFER_SIZE*4);
+
+    /* Write data to the SDRAM memory */
+    for (uwIndex = 0; uwIndex < BUFFER_SIZE; uwIndex++)
+    {
+      *(uint32_t*) (aTestBuffer + WRITE_READ_ADDR + 4*uwIndex) = aTxBuffer[uwIndex];
+    }
+
+    /* Read back data from the SDRAM memory */
+    for (uwIndex = 0; uwIndex < BUFFER_SIZE; uwIndex++)
+    {
+      aRxBuffer[uwIndex] = *(uint32_t*) (aTestBuffer + WRITE_READ_ADDR + 4*uwIndex);
+    }
+
+    /*##-3- Checking data integrity ############################################*/
+
+    for (uwIndex = 0; (uwIndex < BUFFER_SIZE) && (uwWriteReadStatus == 0); uwIndex++)
+    {
+      if (aRxBuffer[uwIndex] != aTxBuffer[uwIndex])
+      {
+        uwWriteReadStatus++;
+      }
+    }
+
+	printf("Test : %s @ %ld\r\n", uwWriteReadStatus ? "Fail" : "Passed", uwIndex);
+	if(uwWriteReadStatus)
+	{
+		printf("%p :: 0x%08lx != 0x%08lx\n", &aTxBuffer[uwIndex], aTxBuffer[uwIndex], aRxBuffer[uwIndex]);
+	}
+
+	return uwWriteReadStatus ? 1 : 0;
+}
+
 int main(int argc, char **argv) {
 	int opt, ret;
 	void *address;
@@ -84,7 +145,7 @@ int main(int argc, char **argv) {
 		return 0;
 	}
 
-	while (-1 != (opt = getopt(argc, argv, "n:hcslw:"))) {
+	while (-1 != (opt = getopt(argc, argv, "n:thcslw:"))) {
 		switch (opt) {
 		case 'n':
 			ret = parse_option(optarg, opt, (unsigned long int *) &length);
@@ -111,6 +172,10 @@ int main(int argc, char **argv) {
 			if (ret != 0) {
 				return ret;
 			}
+			break;
+		case 't':
+			printf("Test Mode start:\n");
+			mode = MEM_MODE_TEST;
 			break;
 		case '?':
 		case 'h':
@@ -152,6 +217,8 @@ int main(int argc, char **argv) {
 			*(unsigned char *) address = val;
 			break;
 		}
+	} else if (mode == MEM_MODE_TEST) {
+		memtest();
 	} else {
 		align = (uintptr_t) address & 0xF;
 		while (length--) {

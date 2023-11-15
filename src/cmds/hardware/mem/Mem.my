@@ -27,7 +27,7 @@ package embox.cmd
 				Number of units to read
 		EXAMPLES
 			mem 0x40000000 -n 32
-			mem -w 0x40000000 0x55
+			mem 0x40000000 -w 0x55
 		SEE ALSO
 			testmem
 		AUTHORS

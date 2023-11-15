@@ -133,18 +133,19 @@ uint8_t BSP_SDRAM_Init(void)
   /* SDRAM device configuration */
   sdramHandle.Instance = FMC_SDRAM_DEVICE;
     
-  /* Timing configuration for 100Mhz as SDRAM clock frequency (System clock is up to 200Mhz) */
-  Timing.LoadToActiveDelay    = 2;
-  Timing.ExitSelfRefreshDelay = 7;
-  Timing.SelfRefreshTime      = 4;
-  Timing.RowCycleDelay        = 7;
-  Timing.WriteRecoveryTime    = 2;
-  Timing.RPDelay              = 2;
-  Timing.RCDDelay             = 2;
+  /* Timing configuration for 108Mhz as SDRAM clock frequency (System clock is up to 216Mhz) */
+  // SDRAM CLK = 108 MHz = 9.25 ns
+  Timing.LoadToActiveDelay    = 2;    // T_MRD  = 2 CLK
+  Timing.ExitSelfRefreshDelay = 11;   // T_XSR  = 97ns 
+  Timing.SelfRefreshTime      = 7;    // T_RAS  = 42 ~ 120000 ns
+  Timing.RowCycleDelay        = 10;   // T_RC   = 60 ns ~
+  Timing.WriteRecoveryTime    = 3;    // T_WR   = 1 clk + 6 ns
+  Timing.RPDelay              = 2;    // T_RP   = 18 ns
+  Timing.RCDDelay             = 2;    // T_RCD  = 18 ns
   
   sdramHandle.Init.SDBank             = FMC_SDRAM_BANK1;
-  sdramHandle.Init.ColumnBitsNumber   = FMC_SDRAM_COLUMN_BITS_NUM_8;
-  sdramHandle.Init.RowBitsNumber      = FMC_SDRAM_ROW_BITS_NUM_12;
+  sdramHandle.Init.ColumnBitsNumber   = FMC_SDRAM_COLUMN_BITS_NUM_9;
+  sdramHandle.Init.RowBitsNumber      = FMC_SDRAM_ROW_BITS_NUM_13;
   sdramHandle.Init.MemoryDataWidth    = SDRAM_MEMORY_WIDTH;
   sdramHandle.Init.InternalBankNumber = FMC_SDRAM_INTERN_BANKS_NUM_4;
   sdramHandle.Init.CASLatency         = FMC_SDRAM_CAS_LATENCY_3;
@@ -167,7 +168,11 @@ uint8_t BSP_SDRAM_Init(void)
   }
   
   /* SDRAM initialization sequence */
-  BSP_SDRAM_Initialization_sequence(REFRESH_COUNT);
+	// refresh rate = refresh period / number of rows
+	// refresh rate = 64ms / 8192 = 7.81 us
+	// refresh count = (refresh rate x SDRAM clock frequency) - 20
+	// refresh count = 7.81 us x 108 MHz - 20 = 823
+  BSP_SDRAM_Initialization_sequence(823);
   
   return sdramstatus;
 }
@@ -231,14 +236,14 @@ void BSP_SDRAM_Initialization_sequence(uint32_t RefreshCount)
   /* Step 4: Configure an Auto Refresh command */ 
   Command.CommandMode            = FMC_SDRAM_CMD_AUTOREFRESH_MODE;
   Command.CommandTarget          = FMC_SDRAM_CMD_TARGET_BANK1;
-  Command.AutoRefreshNumber      = 8;
+  Command.AutoRefreshNumber      = 1;
   Command.ModeRegisterDefinition = 0;
 
   /* Send the command */
   HAL_SDRAM_SendCommand(&sdramHandle, &Command, SDRAM_TIMEOUT);
   
   /* Step 5: Program the external memory mode register */
-  tmpmrd = (uint32_t)SDRAM_MODEREG_BURST_LENGTH_1          |\
+  tmpmrd = (uint32_t)SDRAM_MODEREG_BURST_LENGTH_2          |\
                      SDRAM_MODEREG_BURST_TYPE_SEQUENTIAL   |\
                      SDRAM_MODEREG_CAS_LATENCY_3           |\
                      SDRAM_MODEREG_OPERATING_MODE_STANDARD |\
@@ -246,7 +251,7 @@ void BSP_SDRAM_Initialization_sequence(uint32_t RefreshCount)
   
   Command.CommandMode            = FMC_SDRAM_CMD_LOAD_MODE;
   Command.CommandTarget          = FMC_SDRAM_CMD_TARGET_BANK1;
-  Command.AutoRefreshNumber      = 1;
+  Command.AutoRefreshNumber      = 2;
   Command.ModeRegisterDefinition = tmpmrd;
 
   /* Send the command */
@@ -363,23 +368,25 @@ __weak void BSP_SDRAM_MspInit(SDRAM_HandleTypeDef  *hsdram, void *Params)
   
   /* Enable FMC clock */
   __HAL_RCC_FMC_CLK_ENABLE();
-  
-  /* Enable chosen DMAx clock */
-  __DMAx_CLK_ENABLE();
 
   /* Enable GPIOs clock */
+  __HAL_RCC_GPIOC_CLK_ENABLE();
   __HAL_RCC_GPIOD_CLK_ENABLE();
   __HAL_RCC_GPIOE_CLK_ENABLE();
   __HAL_RCC_GPIOF_CLK_ENABLE();
   __HAL_RCC_GPIOG_CLK_ENABLE();
-  __HAL_RCC_GPIOH_CLK_ENABLE();
-  __HAL_RCC_GPIOI_CLK_ENABLE();
   
   /* Common GPIO configuration */
   gpio_init_structure.Mode      = GPIO_MODE_AF_PP;
   gpio_init_structure.Pull      = GPIO_PULLUP;
-  gpio_init_structure.Speed     = GPIO_SPEED_HIGH;
+  gpio_init_structure.Speed     = GPIO_SPEED_FAST;
   gpio_init_structure.Alternate = GPIO_AF12_FMC;
+
+  /* GPIOC configuration */
+  gpio_init_structure.Pin   = GPIO_PIN_0 | GPIO_PIN_2 | GPIO_PIN_3;
+ 
+   
+  HAL_GPIO_Init(GPIOC, &gpio_init_structure);
   
   /* GPIOD configuration */
   gpio_init_structure.Pin   = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_8| GPIO_PIN_9 | GPIO_PIN_10 |\
@@ -406,17 +413,6 @@ __weak void BSP_SDRAM_MspInit(SDRAM_HandleTypeDef  *hsdram, void *Params)
   gpio_init_structure.Pin   = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_4|\
                               GPIO_PIN_5 | GPIO_PIN_8 | GPIO_PIN_15;
   HAL_GPIO_Init(GPIOG, &gpio_init_structure);
-
-  /* GPIOH configuration */  
-  gpio_init_structure.Pin   = GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_5 | GPIO_PIN_8 | GPIO_PIN_9 |\
-                              GPIO_PIN_10 | GPIO_PIN_11 | GPIO_PIN_12 | GPIO_PIN_13 | GPIO_PIN_14 |\
-                              GPIO_PIN_15;
-  HAL_GPIO_Init(GPIOH, &gpio_init_structure); 
-  
-  /* GPIOI configuration */  
-  gpio_init_structure.Pin   = GPIO_PIN_0 | GPIO_PIN_1 | GPIO_PIN_2 | GPIO_PIN_3 | GPIO_PIN_4 |\
-                              GPIO_PIN_5 | GPIO_PIN_6 | GPIO_PIN_7 | GPIO_PIN_9 | GPIO_PIN_10;
-  HAL_GPIO_Init(GPIOI, &gpio_init_structure);  
   
   /* Configure common DMA parameters */
   dma_handle.Init.Channel             = SDRAM_DMAx_CHANNEL;
