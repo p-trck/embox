@@ -86,7 +86,7 @@ bool cmdline_history_new_entry(CMDLINE *cmdline) {
 
 		history->index = (history->index + 1) % CMDLINE_HISTORY_SIZE;
 		history->array[history->index][0] = '\0';
-		history->array[(history->index + 1) % CMDLINE_HISTORY_SIZE][0] = '\0';
+		//history->array[(history->index + 1) % CMDLINE_HISTORY_SIZE][0] = '\0';
 	}
 
 	cmdline->history_cursor = history->index;
