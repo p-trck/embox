@@ -63,6 +63,7 @@ static void pa_do_rate_conversion(struct pa_strm *pa_stream,
 	out_rate = audio_dev->dir == AUDIO_DEV_OUTPUT
 		? pa_stream->rate : audio_dev_rate;
 
+	log_debug("cnvt rate : %d -> %d", cur_rate, out_rate);
 	audio_convert_rate(cur_rate, out_rate, buf, inp_frames);
 }
 
@@ -83,9 +84,32 @@ static void pa_do_channel_conversion(struct pa_strm *pa_stream,
 	out_chan = audio_dev->dir == AUDIO_DEV_OUTPUT
 		? num_of_chan : pa_stream->number_of_chan;
 
+	log_debug("cnvt chnl : %d -> %d", cur_chan, out_chan);
 	audio_convert_channels(cur_chan, out_chan, buf, inp_frames);
 }
+#if 0
+#include <fs/file_format.h>
+static void pushtosdram(uint8_t *buf, int size)
+{
+	static uint32_t idx = 0;
+	uint8_t *dst = (uint8_t *)0x60000000;
 
+	if(idx == 0)
+	{
+		struct wave_header hdr;
+		_wave_header_fill(&hdr, 1, 16000, 16, 32*1024*1024);
+		memcpy((void *) dst, &hdr, sizeof(hdr));
+		dst += sizeof(hdr);
+	}
+
+	memcpy(dst + idx, buf, size);
+	idx += size;
+	if(idx > (32*1024*1024))
+	{
+		idx = 0;
+	}
+}
+#endif
 static void *pa_thread_hnd(void *arg) {
 	struct pa_strm *pa_stream = (struct pa_strm *) arg;
 	int err;
@@ -168,12 +192,13 @@ static void *pa_thread_hnd(void *arg) {
 			break;
 		case AUDIO_DEV_INPUT:
 			in_buf  = audio_dev_get_in_cur_ptr(audio_dev);
-			log_debug("in_buf = 0x%X, buf_len %d", in_buf, buf_len);
+			log_debug("in_buf = 0x%X, buf_len %d inp_frames %d", in_buf, buf_len, inp_frames);
 
 			pa_do_rate_conversion(pa_stream, audio_dev, in_buf,
 				inp_frames);
 			pa_do_channel_conversion(pa_stream, audio_dev, in_buf,
 				inp_frames);
+			//pushtosdram(in_buf, inp_frames * 2);
 			break;
 		default:
 			break;
