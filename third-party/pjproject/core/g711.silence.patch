@@ -1,0 +1,18 @@
+diff -aur pjproject-6470fb9e4bd9baa14d50f754dc7f945e7a76c828/pjmedia/src/pjmedia/g711.c ../../build/extbld/third_party/pjproject/core_c/pjproject-6470fb9e4bd9baa14d50f754dc7f945e7a76c828/pjmedia/src/pjmedia/g711.c
+--- pjproject-6470fb9e4bd9baa14d50f754dc7f945e7a76c828/pjmedia/src/pjmedia/g711.c	2021-02-24 12:03:29.000000000 +0300
++++ ../../build/extbld/third_party/pjproject/core_c/pjproject-6470fb9e4bd9baa14d50f754dc7f945e7a76c828/pjmedia/src/pjmedia/g711.c	2021-03-02 18:53:37.643212011 +0300
+@@ -502,9 +502,14 @@ static pj_status_t  g711_encode(pjmedia_codec *codec,
+ 	silence_period = pj_timestamp_diff32(&priv->last_tx,
+ 					     &input->timestamp);
+ 
++#if 0
+ 	is_silence = pjmedia_silence_det_detect(priv->vad, 
+ 						(const pj_int16_t*) input->buf, 
+ 						(input->size >> 1), NULL);
++#else
++    is_silence = 0;
++#endif
++
+ 	if (is_silence && 
+ 	    (PJMEDIA_CODEC_MAX_SILENCE_PERIOD == -1 ||
+ 	     silence_period < PJMEDIA_CODEC_MAX_SILENCE_PERIOD*8000/1000))
