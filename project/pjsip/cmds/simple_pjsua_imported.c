@@ -127,7 +127,7 @@ static void init_pjsua(void) {
 	cfg.cb.on_call_state = &on_call_state;
 
 	pjsua_logging_config_default(&log_cfg);
-	log_cfg.console_level = 4;
+	log_cfg.console_level = 1;
 
 	status = pjsua_init(&cfg, &log_cfg, NULL);
 	if (status != PJ_SUCCESS) {
