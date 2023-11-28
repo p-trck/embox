@@ -92,3 +92,17 @@ void arch_shutdown(arch_shutdown_mode_t mode) {
 uint32_t HAL_GetTick(void) {
 	return clock_sys_ticks();
 }
+
+void HAL_MspInit(void)
+{
+	GPIO_InitTypeDef GPIO_InitStruct;
+
+	// SET MUTE PIO
+  __HAL_RCC_GPIOA_CLK_ENABLE();
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_SET);
+	GPIO_InitStruct.Pin = GPIO_PIN_10;
+	GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_HIGH;
+	GPIO_InitStruct.Pull = GPIO_PULLUP;
+  GPIO_InitStruct.Mode = GPIO_MODE_OUTPUT_PP;
+  HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
+}

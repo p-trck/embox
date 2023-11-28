@@ -32,6 +32,7 @@
 //#define LED_CONTROL
 #define LED1_PIN        (1 << 13)
 #define LED2_PIN        (1 << 5)
+#define PIN_MUTE		(1 << 10)
 
 static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 				pjsip_rx_data *rdata) {
@@ -215,6 +216,9 @@ int main(int argc, char *argv[]) {
 			error_exit("Error making call", status);
 		}
 	}
+
+	gpio_setup_mode(GPIO_PORT_A, PIN_MUTE, GPIO_MODE_OUT);
+	gpio_set(GPIO_PORT_A, PIN_MUTE, GPIO_PIN_LOW);
 
 	/* Wait until user press "q" to quit. */
 	for (;;) {
