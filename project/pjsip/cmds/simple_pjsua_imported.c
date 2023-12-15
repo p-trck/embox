@@ -220,6 +220,26 @@ int main(int argc, char *argv[]) {
 	gpio_setup_mode(GPIO_PORT_A, PIN_MUTE, GPIO_MODE_OUT);
 	gpio_set(GPIO_PORT_A, PIN_MUTE, GPIO_PIN_LOW);
 
+	#if 0
+	puts("PJSIP running..");
+	unsigned lv_rx, lv_tx, muted = 0;
+	for(;;) {
+		pjsua_conf_get_signal_level(0, &lv_tx, &lv_rx);
+		if(!muted && lv_tx > 30)
+		{
+			muted = 1;
+			pjsua_conf_adjust_rx_level(0, 0.);
+			puts("Mute");
+		}
+		else if(muted && lv_tx < 30)
+		{
+			muted = 0;
+			pjsua_conf_adjust_rx_level(0, 1.);
+			puts("Unmute");
+		}
+		usleep(100000);
+	}
+	#endif
 	/* Wait until user press "q" to quit. */
 	for (;;) {
 		char option[10];
