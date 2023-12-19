@@ -2013,6 +2013,7 @@ static void DFSDMx_ChannelMspInit(void)
   /* DFSDM pin configuration: DMIC_DATIN1 pin --------------------------------*/
   GPIO_InitStruct.Pin = AUDIO_DFSDMx_DMIC_DATIN1_PIN;
   GPIO_InitStruct.Alternate = AUDIO_DFSDMx_DMIC_DATIN_AF;
+  GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(AUDIO_DFSDMx_DMIC_DATIN_GPIO_PORT, &GPIO_InitStruct);
   
   if(AudioIn_ChannelNumber > 2)
