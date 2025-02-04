@@ -1,0 +1,34 @@
+package embox.cmd.testing
+
+@AutoCmd
+@Cmd(name = "diag",
+     help = "diag test program",
+     man  = '''
+     	NAME
+		diag
+	SYNOPSIS
+		diag
+	DESCRIPTION
+		do diag test
+	OPTIONS
+		-h print help
+	AUTHORS
+		patrick
+	''')
+
+module diag {
+	option string diagstatus="diagtest"
+
+	source "diag.c"
+
+	depends embox.compat.libc.stdio.printf
+	depends embox.compat.libc.str
+	depends embox.compat.libc.stdio.open
+	depends embox.compat.libc.stdio.fputc
+	depends embox.compat.posix.util.getopt
+	depends embox.compat.posix.util.sleep
+
+	include embox.net.tcp
+	include embox.net.tcp_sock(log_level=1, amount_tcp_sock=30)
+	include embox.net.ipv4(max_uncomplete_cnt=8)
+}
