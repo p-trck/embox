@@ -38,7 +38,12 @@ static void print_help(char **argv) {
 
 #define BROADCAST_IP "255.255.255.255"
 #define PORT 9090
-#define BUFFER_SIZE 32
+#define SIZEOF_RXBUFFER 32
+#define MSG_HANDSHAKE "whoareyou"
+#define MSG_RESPONSE "iamdiag"
+
+static int sock;
+static struct sockaddr_in broadcast_addr, local_addr;
 
 
 char* get_broadcast_address() {
@@ -68,12 +73,69 @@ char* get_broadcast_address() {
     return NULL;
 }
 
-int send_broadcast_message() {
-    int sock;
-    struct sockaddr_in broadcast_addr, local_addr;
-    char buffer[BUFFER_SIZE];
+int send_message(char *message) {
+    if (sendto(sock, message, strlen(message), 0, 
+               (struct sockaddr*)&broadcast_addr, sizeof(broadcast_addr)) < 0) {
+        perror("Broadcast send failed");
+        return -1;
+    }
+    
+    printf("Broadcast message sent: %s\n", message);
+    return 0;
+}
+
+int recv_message(char *message, int len, int waitsec)
+{
+    // 타임아웃 설정
+    struct timeval timeout;
+
+    timeout.tv_sec = waitsec;
+    timeout.tv_usec = 0;
+    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
+        perror("Setsockopt SO_RCVTIMEO failed");
+        return -1;
+    }
+
+    struct sockaddr_in sender_addr;
+    socklen_t sender_len = sizeof(sender_addr);
+    int received_bytes = recvfrom(sock, message, len - 1, 0,
+                                (struct sockaddr*)&sender_addr, &sender_len);
+    
+    if (received_bytes < 0) {
+        perror("No response received within timeout");
+        return -1;
+    }
+    
+    message[received_bytes] = '\0';
+    printf("Received response: %s from %s\n", message, inet_ntoa(sender_addr.sin_addr));
+    
+    return received_bytes;
+}
+
+int proc_handshake() {
+
+    char buffer[SIZEOF_RXBUFFER];
+
+    if(send_message(MSG_HANDSHAKE))
+    {
+        perror("Broadcast send failed");
+        return -1;
+    }
+
+    if(recv_message(buffer, SIZEOF_RXBUFFER, 1))
+    {
+        perror("No response received within timeout");
+        return -1;
+    }
+   
+    int result = (strcmp(buffer, MSG_RESPONSE) == 0) ? 0 : -1;
+    
+    return result;
+}
+
+int init_udp_socket()
+{
     int broadcast_enable = 1;
-    int timeout_sec = 5;
     
     // 브로드캐스트 주소 가져오기
     char* broadcast_ip = get_broadcast_address();
@@ -108,58 +170,23 @@ int send_broadcast_message() {
         return -1;
     }
 
-    // 타임아웃 설정
-    struct timeval timeout;
-    timeout.tv_sec = timeout_sec;
-    timeout.tv_usec = 0;
-    if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
-        perror("Setsockopt SO_RCVTIMEO failed");
-        close(sock);
-        return -1;
-    }
-    
     // 브로드캐스트 주소 설정
     memset(&broadcast_addr, 0, sizeof(broadcast_addr));
     broadcast_addr.sin_family = AF_INET;
     broadcast_addr.sin_port = htons(PORT);
     broadcast_addr.sin_addr.s_addr = inet_addr(broadcast_ip);
     
-    // "whoareyou" 메시지 전송
-    const char *message = "whoareyou";
-    if (sendto(sock, message, strlen(message), 0, 
-               (struct sockaddr*)&broadcast_addr, sizeof(broadcast_addr)) < 0) {
-        perror("Broadcast send failed");
-        close(sock);
-        return -1;
-    }
-    
-    printf("Broadcast message sent: %s\n", message);
-    
-    // 응답 대기
-    struct sockaddr_in sender_addr;
-    socklen_t sender_len = sizeof(sender_addr);
-    int received_bytes = recvfrom(sock, buffer, BUFFER_SIZE - 1, 0,
-                                (struct sockaddr*)&sender_addr, &sender_len);
-    
-    if (received_bytes < 0) {
-        perror("No response received within timeout");
-        close(sock);
-        return -1;
-    }
-    
-    buffer[received_bytes] = '\0';
-    printf("Received response: %s from %s\n", buffer, inet_ntoa(sender_addr.sin_addr));
-    
-    // "iamdiag" 메시지 확인
-    int result = (strcmp(buffer, "iamdiag") == 0) ? 0 : -1;
-    
-    close(sock);
-    return result;
+	return sock;
 }
 
+void proc_udpTerminal()
+{
+	printf("proc_udpTerminal\n");
+}
 
 int main(int argc, char **argv) {
 	int opt;
+	int ret;
 
 	while (-1 != (opt = getopt(argc, argv, "phm"))) {
 		switch (opt) {
@@ -171,10 +198,24 @@ int main(int argc, char **argv) {
 				print_help(argv);
 				return 0;
 			case 'm':
-				if(0 == send_broadcast_message())
+				ret = init_udp_socket();
+				if(ret < 0)
+				{
+					printf("init_udp_socket failed\n");
+					return -1;
+				}
+
+				if(0 == proc_handshake())
+				{
 					printf("handshake ok\n");
+					proc_udpTerminal();
+				}
 				else
+				{
 					printf("handshake failed\n");
+				}
+
+				close(sock);
 				break;
 			default:
 				printf("default\n");
