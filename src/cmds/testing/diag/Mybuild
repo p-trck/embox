@@ -27,8 +27,4 @@ module diag {
 	depends embox.compat.libc.stdio.fputc
 	depends embox.compat.posix.util.getopt
 	depends embox.compat.posix.util.sleep
-
-	include embox.net.tcp
-	include embox.net.tcp_sock(log_level=1, amount_tcp_sock=30)
-	include embox.net.ipv4(max_uncomplete_cnt=8)
 }
