@@ -26,6 +26,8 @@
 
 #include <framework/mod/options.h>
 
+#include "diagtest.h"
+
 static void print_help(char **argv) {
 	assert(argv);
 	assert(argv[0]);
@@ -122,7 +124,7 @@ int proc_handshake() {
         return -1;
     }
 
-    if(recv_message(buffer, SIZEOF_RXBUFFER, 1))
+    if(recv_message(buffer, SIZEOF_RXBUFFER, 1) <= 0)
     {
         perror("No response received within timeout");
         return -1;
@@ -182,6 +184,34 @@ int init_udp_socket()
 void proc_udpTerminal()
 {
 	printf("proc_udpTerminal\n");
+    char buffer[SIZEOF_RXBUFFER];
+    int received_bytes;
+    int result = 0;
+    
+    while (1) {
+        received_bytes = recv_message(buffer, SIZEOF_RXBUFFER, 1);
+		if (received_bytes > 0) {
+			printf("Received message: %s\n", buffer);
+			if (strcmp(buffer, "exit") == 0) {
+				break;
+			}
+			else if (strcmp(buffer, "reboot") == 0) {
+				system("reboot");
+			}
+			else if (strcmp(buffer, "spk") == 0) {
+				result = proc_testSpeaker();
+			}
+			else if (strcmp(buffer, "mic") == 0) {
+				result = proc_testMIC();
+			}
+
+            if (result == 0) {
+                send_message("OK");
+			} else {
+                send_message("FAIL");
+            }
+		}
+	}
 }
 
 int main(int argc, char **argv) {

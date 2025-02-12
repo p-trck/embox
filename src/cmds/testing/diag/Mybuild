@@ -20,6 +20,8 @@ module diag {
 	option string diagstatus="diagtest"
 
 	source "diag.c"
+	source "speaker.c"
+	source "mic.c"
 
 	depends embox.compat.libc.stdio.printf
 	depends embox.compat.libc.str
