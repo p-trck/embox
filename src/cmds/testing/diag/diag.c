@@ -75,6 +75,29 @@ char* get_broadcast_address() {
     return NULL;
 }
 
+char* get_ip_address() {
+    struct ifaddrs *ifap, *ifa;
+    static char ip[INET_ADDRSTRLEN];
+    
+    if (getifaddrs(&ifap) == -1) {
+        perror("getifaddrs failed");
+        return NULL;
+    }
+    
+    for (ifa = ifap; ifa; ifa = ifa->ifa_next) {
+        if (ifa->ifa_addr && ifa->ifa_addr->sa_family == AF_INET && 
+            !(ifa->ifa_flags & IFF_LOOPBACK)) {
+            struct sockaddr_in *addr = (struct sockaddr_in *)ifa->ifa_addr;
+            inet_ntop(AF_INET, &addr->sin_addr, ip, INET_ADDRSTRLEN);
+            freeifaddrs(ifap);
+            return ip;
+        }
+    }
+    
+    freeifaddrs(ifap);
+    return NULL;
+}
+
 int send_message(char *message) {
     if (sendto(sock, message, strlen(message), 0, 
                (struct sockaddr*)&broadcast_addr, sizeof(broadcast_addr)) < 0) {
@@ -104,7 +127,7 @@ int recv_message(char *message, int len, int waitsec)
                                 (struct sockaddr*)&sender_addr, &sender_len);
     
     if (received_bytes < 0) {
-        perror("No response received within timeout");
+        //perror("No response received within timeout");
         return -1;
     }
     
@@ -183,11 +206,17 @@ int init_udp_socket()
 
 void proc_udpTerminal()
 {
-	printf("proc_udpTerminal\n");
     char buffer[SIZEOF_RXBUFFER];
     int received_bytes;
     int result = 0;
     
+	send_message("MODEL: NetSpeaker");
+    send_message("VERSION: 1.0.0");
+    send_message("DIAGNOSTIC MODE");
+    snprintf(buffer, SIZEOF_RXBUFFER, "IP: %s", get_ip_address());
+    send_message(buffer);
+    send_message("Type 'exit' to quit");
+
     while (1) {
         received_bytes = recv_message(buffer, SIZEOF_RXBUFFER, 1);
 		if (received_bytes > 0) {
