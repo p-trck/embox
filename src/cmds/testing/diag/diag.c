@@ -208,7 +208,7 @@ void proc_udpTerminal()
 {
     char buffer[SIZEOF_RXBUFFER];
     int received_bytes;
-    int result = 0;
+    int result = -1;
     
 	send_message("MODEL: NetSpeaker");
     send_message("VERSION: 1.0.0");
@@ -222,13 +222,15 @@ void proc_udpTerminal()
 		if (received_bytes > 0) {
 			printf("Received message: %s\n", buffer);
 			if (strcmp(buffer, "exit") == 0) {
+                result = 0;
 				break;
 			}
 			else if (strcmp(buffer, "reboot") == 0) {
 				system("reboot");
+                result = 0;
 			}
-			else if (strcmp(buffer, "spk") == 0) {
-				result = proc_testSpeaker();
+			else if (strncmp(buffer, "spk", 3) == 0) {
+				result = proc_testSpeaker(buffer);
 			}
 			else if (strcmp(buffer, "mic") == 0) {
 				result = proc_testMIC();
@@ -236,8 +238,10 @@ void proc_udpTerminal()
 
             if (result == 0) {
                 send_message("OK");
-			} else {
-                send_message("FAIL");
+            } else if (result == -1) {
+                send_message("??");
+            } else {
+                send_message("NG");
             }
 		}
 	}

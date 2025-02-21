@@ -6,8 +6,9 @@ extern "C" {
 #endif
 
 /* Add your declarations here */
-extern int proc_testSpeaker();
+extern int proc_testSpeaker(char *buf);
 extern int proc_testMIC();
+extern int play_sin(int freq, int volume);
 
 #ifdef __cplusplus
 }
