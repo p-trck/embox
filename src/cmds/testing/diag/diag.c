@@ -105,7 +105,7 @@ int send_message(char *message) {
         return -1;
     }
     
-    printf("Broadcast message sent: %s\n", message);
+    printf("> %s\n", message);
     return 0;
 }
 

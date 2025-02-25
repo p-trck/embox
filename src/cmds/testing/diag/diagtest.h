@@ -9,7 +9,7 @@ extern "C" {
 extern int proc_testSpeaker(char *buf);
 extern int proc_testMIC();
 extern int play_sin(int freq, int volume);
-
+extern int send_message(char *message);
 #ifdef __cplusplus
 }
 #endif

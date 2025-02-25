@@ -30,4 +30,6 @@ module diag {
 	depends embox.compat.libc.stdio.fputc
 	depends embox.compat.posix.util.getopt
 	depends embox.compat.posix.util.sleep
+	depends embox.driver.audio.portaudio_api
+	depends embox.lib.file_format
 }
