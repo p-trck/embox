@@ -240,6 +240,10 @@ int main(int argc, char *argv[]) {
 		usleep(100000);
 	}
 	#endif
+
+	extern int init_udp_terminal();
+	init_udp_terminal();
+
 	/* Wait until user press "q" to quit. */
 	for (;;) {
 		char option[10];
