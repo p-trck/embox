@@ -24,6 +24,10 @@
 #include <net/if.h>
 #include <ifaddrs.h>
 
+#include <hal/arch.h>
+#include <hal/ipl.h>
+#include <kernel/irq.h>
+
 #include <framework/mod/options.h>
 
 #include "diagtest.h"
@@ -96,6 +100,53 @@ char* get_ip_address() {
     
     freeifaddrs(ifap);
     return NULL;
+}
+
+
+/**
+ * 시스템 리셋을 수행하는 함수
+ * 
+ * @return 성공 시 0, 실패 시 -1을 반환합니다.
+ * 일반적으로 성공적인 리셋의 경우 이 함수는 반환되지 않습니다.
+ */
+int system_reset(void) {
+    printf("System reset...\n");
+    
+    /* 모든 인터럽트 비활성화 */
+    ipl_t ipl = ipl_save();
+    
+    /* 캐시 및 버퍼 플러시 */
+    arch_idle();
+    
+    /* CPU 리셋 */
+    arch_shutdown(ARCH_SHUTDOWN_MODE_REBOOT);
+    
+    /* 리셋이 실패한 경우 인터럽트 복원 */
+    ipl_restore(ipl);
+    
+    /* 리셋이 실패하면 이 지점에 도달합니다 */
+    fprintf(stderr, "Fail to reset system\n");
+    return -1;
+}
+
+/**
+ * 세이프 리셋을 수행하는 함수
+ * 중요한 작업을 완료한 후 리셋을 수행합니다.
+ * 
+ * @return 성공 시 0, 실패 시 -1을 반환합니다.
+ */
+int safe_system_reset(void) {
+    /* 열린 파일 핸들을 닫고 버퍼를 플러시 */
+    fflush(NULL);
+    
+    /* 필요한 경우 파일 시스템 동기화 */
+    sync();
+    
+    /* 잠시 대기 (선택적) */
+    sleep(1);
+    
+    /* 실제 리셋 수행 */
+    return system_reset();
 }
 
 int send_message(char *message) {
@@ -226,7 +277,7 @@ void proc_udpTerminal()
 				break;
 			}
 			else if (strcmp(buffer, "reboot") == 0) {
-				system("reboot");
+				safe_system_reset();
                 result = 0;
 			}
 			else if (strncmp(buffer, "spk", 3) == 0) {
@@ -243,6 +294,8 @@ void proc_udpTerminal()
             } else {
                 send_message("NG");
             }
+
+            result = -1;
 		}
 	}
 }
