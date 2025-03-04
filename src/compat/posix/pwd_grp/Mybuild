@@ -1,20 +1,27 @@
-
 package embox.compat.posix
 
-static module passwd {
+@DefaultImpl(passwd)
+abstract module pwd_api {
+}
 
+static module passwd extends pwd_api {
 	source "pwd_grp.c"
 
 	depends passwd_db
 	depends crypt
+	depends embox.compat.libc.stdio.scanf_api
+	depends embox.compat.libc.stdio.fseek
 	depends embox.compat.libc.stdio.file_ops
+}
+
+static module pwd_stub extends pwd_api {
+	source "pwd_stub.c"
 }
 
 @DefaultImpl(passwd_db_static)
 abstract module passwd_db { }
 
 module passwd_db_static extends passwd_db {
-
 	source "db_static.h"
 
 	depends embox.compat.posix.passwd_db_files

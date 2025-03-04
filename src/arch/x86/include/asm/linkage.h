@@ -5,8 +5,14 @@
  * @author: Anton Bondarev
  */
 
+//#include <asm/gdt.h>
+
+
 #ifndef LINKAGE_H_
 #define LINKAGE_H_
+
+#include <module/embox/arch/cpu.h>
+#include <module/embox/arch/smp.h>
 
 #ifdef __ASSEMBLER__
 

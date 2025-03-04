@@ -1,0 +1,9 @@
+package platform.generic
+
+module platform_init_stub extends platform.platform_init {
+	source "platform_init_stub.c"
+}
+
+module platform_shutdown_stub extends platform.platform_shutdown {
+	source "platform_shutdown_stub.c"
+}

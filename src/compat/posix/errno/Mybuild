@@ -1,4 +1,3 @@
-
 package embox.compat.posix.errno
 
 @Mandatory // FIXME modules should have explicit dependency on this

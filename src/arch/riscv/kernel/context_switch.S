@@ -7,6 +7,7 @@
  * @author Nastya Nizharadze
  */
 #include <asm/asm.h>
+#include <asm/regs.h>
 
 #include "context.h"
 
@@ -16,7 +17,6 @@
 
 .align 2
 context_switch:
-	addi    sp, sp, -CTX_SIZE
 	PTR_S   sp, CTX_SP(a0)
 	PTR_S   ra, CTX_RA(a0)
 	PTR_S   s0, CTX_S0(a0)
@@ -31,7 +31,7 @@ context_switch:
 	PTR_S   s9, CTX_S9(a0)
 	PTR_S   s10, CTX_S10(a0)
 	PTR_S   s11, CTX_S11(a0)
-	csrr    t6, mstatus
+	csrr    t6, STATUS_REG
 	PTR_S   t6, CTX_MSTATUS(a0)
 
 	PTR_L   sp, CTX_SP(a1)
@@ -50,7 +50,6 @@ context_switch:
 	PTR_L   s10, CTX_S10(a1)
 	PTR_L   s11, CTX_S11(a1)
 	PTR_L   t6, CTX_MSTATUS(a1)
-	csrw    mstatus, t6
-	addi    sp, sp, CTX_SIZE
+	csrw    STATUS_REG, t6
 
 	ret

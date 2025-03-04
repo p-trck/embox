@@ -12,16 +12,18 @@
  * @author Ilia Vaprol
  */
 
-#ifndef KERNEL_TIMER_H_
-#define KERNEL_TIMER_H_
+#ifndef KERNEL_TIME_TIMER_H_
+#define KERNEL_TIME_TIMER_H_
 
-#include <stdint.h>
 #include <stdbool.h>
+#include <stdint.h>
+#include <sys/cdefs.h>
+#include <sys/types.h>
+#include <hal/cpu.h>
+#include <hal/ipl.h>
 
 #include <kernel/time/timer_strat.h>
-#include <defines/clock_t.h>
 
-#include <sys/cdefs.h>
 __BEGIN_DECLS
 
 struct sys_timer;
@@ -32,27 +34,38 @@ struct sys_timer;
  */
 typedef void (*sys_timer_handler_t)(struct sys_timer *timer, void *param);
 
-#define TIMER_PERIODIC      0x1
-#define TIMER_ONESHOT       0x0
-#define TIMER_REALTIME      0x80000000
+#define TIMER_PERIODIC       0x1
+#define TIMER_ONESHOT        0x0
+#define TIMER_REALTIME       0x80000000
 
 #define TIMER_STATE_PREALLOC 0x1
 #define TIMER_STATE_STARTED  0x2
+
+struct sys_timer_sharing {
+	uint8_t is_shared;
+	/* Shared on multiprocessor, each bit indicate a CPU */
+	uint32_t shared_cpu;
+};
 
 /**
  * system timer structure
  */
 struct sys_timer {
 	sys_timer_queue_t lnk;
+#ifdef SMP
+	sys_timer_queue_t multi_lnk[NCPU];
+#endif
 	struct dlist_head st_wait_link;
 
-	uint32_t   load;
+	uint32_t load;
 	/* Clocks count at which timer should fire: cnt = current clocks() + load. */
-	clock_t    cnt;
+	clock_t cnt;
 	sys_timer_handler_t handle;
-	void       *param;
+	void *param;
 	unsigned int flags;
-	uint32_t   state; /**< do we use timer_set or timer_init_start? */
+	uint32_t state; /**< do we use timer_set or timer_init_start? */
+
+	struct sys_timer_sharing *timer_sharing;
 };
 
 static inline bool timer_is_preallocated(struct sys_timer *tmr) {
@@ -67,16 +80,66 @@ static inline void timer_clear_preallocated(struct sys_timer *tmr) {
 	tmr->state &= ~TIMER_STATE_PREALLOC;
 }
 
+static inline bool timer_is_shared(struct sys_timer *tmr) {
+	if(tmr->timer_sharing) return tmr->timer_sharing->is_shared;
+	else return 0;
+}
+
+static inline void timer_set_shared(struct sys_timer *tmr) {
+	if(tmr->timer_sharing) tmr->timer_sharing->is_shared = 1;
+}
+
+static inline void timer_set_private(struct sys_timer *tmr) {
+	if(tmr->timer_sharing) tmr->timer_sharing->is_shared = 0;
+}
+
 static inline bool timer_is_started(struct sys_timer *tmr) {
+#ifdef SMP
+	ipl_t ipl = ipl_save();
+	unsigned int cpuid = cpu_get_id();
+	ipl_restore(ipl);
+	if(!timer_is_shared(tmr)) {
+		return tmr->state & TIMER_STATE_STARTED;
+	}else{
+		if(tmr->state & TIMER_STATE_STARTED) {
+			if(tmr->timer_sharing->shared_cpu & (0x1 << cpuid))
+				return 1;
+			else
+				return 0;
+		}else{
+			return 0;
+		}
+	}
+
+#else
 	return tmr->state & TIMER_STATE_STARTED;
+#endif
 }
 
 static inline void timer_set_started(struct sys_timer *tmr) {
+#ifdef SMP
+	ipl_t ipl = ipl_save();
+	unsigned int cpuid = cpu_get_id();
+	ipl_restore(ipl);
+	if(timer_is_shared(tmr)) {
+		tmr->timer_sharing->shared_cpu |= (0x1 << cpuid);
+	}
+#endif
 	tmr->state |= TIMER_STATE_STARTED;
 }
 
 static inline void timer_set_stopped(struct sys_timer *tmr) {
-	tmr->state &= ~TIMER_STATE_STARTED;
+#ifdef SMP
+	ipl_t ipl = ipl_save();
+	unsigned int cpuid = cpu_get_id();
+	ipl_restore(ipl);
+	if(timer_is_shared(tmr)) {
+		tmr->timer_sharing->shared_cpu &= ~(0x1 << cpuid);
+		if(tmr->timer_sharing->shared_cpu == 0x0)
+			tmr->state &= ~TIMER_STATE_STARTED;
+	}else
+#endif
+		tmr->state &= ~TIMER_STATE_STARTED;
 }
 
 static inline bool timer_is_periodic(struct sys_timer *tmr) {
@@ -100,7 +163,7 @@ typedef struct sys_timer sys_timer_t;
  * @param param
  */
 extern int timer_init(struct sys_timer *tmr, unsigned int flags,
-		sys_timer_handler_t handler, void *param);
+    sys_timer_handler_t handler, void *param);
 
 /**
  * Schedule timer to fire after specified amount of jiffes. Weither timer
@@ -125,8 +188,8 @@ extern void timer_stop(struct sys_timer *tmr);
  * @retval 0 if the timer is set
  * @retval non-0 if the timer isn't set
  */
-extern int timer_init_start_msec(struct sys_timer *tmr, unsigned int flags, uint32_t ticks,
-		sys_timer_handler_t handler, void *param);
+extern int timer_init_start_msec(struct sys_timer *tmr, unsigned int flags,
+    uint32_t ticks, sys_timer_handler_t handler, void *param);
 
 /**
  * Set @c handle timer for executing every @c jiffies of hardware timer ticks.
@@ -135,8 +198,8 @@ extern int timer_init_start_msec(struct sys_timer *tmr, unsigned int flags, uint
  * @remarks
  *    This function should call @c handler NO LESS then after @c jiffies ticks.
  */
-extern int timer_init_start(struct sys_timer *tmr, unsigned int flags, clock_t jiffies,
-		sys_timer_handler_t handler, void *param);
+extern int timer_init_start(struct sys_timer *tmr, unsigned int flags,
+    clock_t jiffies, sys_timer_handler_t handler, void *param);
 
 /**
  * Set 'handle' timer for executing every 'ticks' ms.
@@ -150,8 +213,8 @@ extern int timer_init_start(struct sys_timer *tmr, unsigned int flags, clock_t j
  * @retval 0 if the timer is set
  * @retval non-0 if the timer isn't set
  */
-extern int timer_set(struct sys_timer **ptimer, unsigned int flags, uint32_t ticks,
-		sys_timer_handler_t handler, void *param);
+extern int timer_set(struct sys_timer **ptimer, unsigned int flags,
+    uint32_t ticks, sys_timer_handler_t handler, void *param);
 
 /**
  * Shut down timer with system_tmr_t identity
@@ -162,4 +225,4 @@ extern int timer_close(struct sys_timer *ptimer);
 
 __END_DECLS
 
-#endif /* KERNEL_TIMER_H_ */
+#endif /* KERNEL_TIME_TIMER_H_ */

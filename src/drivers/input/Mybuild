@@ -15,7 +15,7 @@ module core {
 
 	depends input_dev_handler
 	depends embox.kernel.irq_api
-	depends embox.util.dlist
+	@NoRuntime depends embox.lib.libds
 }
 
 @DefaultImpl(input_dev_nofs)
@@ -24,7 +24,7 @@ abstract module input_dev_handler {
 }
 
 module input_dev_nofs extends input_dev_handler {
-	option number log_level = 1
+	option string log_level="LOG_ERR"
 	option number hnd_priority = 200
 
 	source "input_dev_nofs.c"
@@ -33,8 +33,9 @@ module input_dev_nofs extends input_dev_handler {
 }
 
 module input_dev_devfs extends input_dev_handler {
-	option number log_level = 1
-	option number input_dev_cnt = 4
+	option string log_level="LOG_ERR"
 
 	source "input_dev_devfs.c"
+
+	@NoRuntime depends embox.device.char_dev
 }

@@ -5,28 +5,25 @@
  * @date 04.10.11
  * @author Alexander Kalmuk
  */
-#include <util/log.h>
-
+#include <assert.h>
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include <util/array.h>
-
-#include <framework/cmd/api.h>
-
 #include <cmd/cmdline.h>
+#include <framework/cmd/api.h>
+#include <lib/libds/array.h>
+#include <util/log.h>
 
 #include "setup_tty.h"
 
-#define STOP_ON_ERROR OPTION_GET(BOOLEAN,stop_on_error)
-
-#define CMD_MAX_ARGV OPTION_GET(NUMBER, cmd_max_argv)
-#define CMD_MAX_LEN  OPTION_GET(NUMBER, cmd_max_len)
+#define STOP_ON_ERROR OPTION_GET(BOOLEAN, stop_on_error)
+#define CMD_MAX_ARGV  OPTION_GET(NUMBER, cmd_max_argv)
+#define CMD_MAX_LEN   OPTION_GET(NUMBER, cmd_max_len)
 
 static const char *script_commands[] = {
-	#include <system_start.inc>
+#include <system_start.inc>
 };
 
 extern int graphic_init(void);
@@ -41,6 +38,7 @@ int system_start(void) {
 	int ret;
 
 	tty_dev_name = setup_tty(OPTION_STRING_GET(tty_dev));
+	assert(tty_dev_name);
 
 	printf("Default IO device[%s]\n", tty_dev_name);
 
@@ -49,7 +47,7 @@ int system_start(void) {
 	array_foreach(command, script_commands, ARRAY_SIZE(script_commands)) {
 		strncpy(cmd_line, command, sizeof(cmd_line) - 1);
 		cmd_line[sizeof(cmd_line) - 1] = '\0';
-#if OPTION_GET(NUMBER,log_level) >= LOG_INFO
+#if OPTION_GET(STRING, log_level) >= LOG_INFO
 		printf(">%s\n", cmd_line);
 #endif
 		argc = cmdline_tokenize((char *)cmd_line, argv);

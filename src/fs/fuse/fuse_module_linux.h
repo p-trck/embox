@@ -1,7 +1,7 @@
 /**
  * @file
  *
- * @data 23.11.2015
+ * @date 23.11.2015
  * @author: Anton Bondarev
  */
 
@@ -20,7 +20,7 @@ extern int fuse_module_mount(struct fuse_module *fm, const char *dev, const char
 
 extern int fuse_module_umount(struct fuse_module *fm);
 
-#include <util/array.h>
+#include <lib/libds/array.h>
 #define FUSE_MODULE_DEF(name, cmd) \
 	static const struct fuse_module fm##__LINE__ = {name, cmd}; \
 	ARRAY_SPREAD_DECLARE(const struct fuse_module *const, fuse_module_repo); \

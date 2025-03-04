@@ -15,7 +15,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 
-#include <util/array.h>
+#include <lib/libds/array.h>
 
 #include <drivers/pci/pci.h>
 #include <drivers/pci/pci_chip/pci_utils.h>
@@ -50,21 +50,27 @@ static void print_error(void) {
 
 /* cpuinfo implementation */
 static void print_cpuinfo(void) {
+	uint64_t cpu_cnt;
 	struct cpu_info *cinfo = get_cpu_info();
 
 	printf("CPU:\n");
+
 	printf("\t%-20s %s\n", "CPU Vendor ID ", cinfo->vendor_id);
 
 	for (int i = 0; i < cinfo->feature_count; i++) {
-		printf("\tCPU %-16s %u\n", 
-				cinfo->feature[i].name,
-				cinfo->feature[i].val
-		);
+		printf("\t");
+		//printf("CPU %-16s %u", cinfo->feature[i].name, cinfo->feature[i].val);
+		cpu_feature_print(&cinfo->feature[i]);
+		printf("\n");
 	}
 
-	printf("\tCurrent time stamp counter: %" PRIu64 "\n", get_cpu_counter());
+	cpu_cnt = get_cpu_counter();
+	if (cpu_cnt) {
+		printf("\tCurrent time stamp counter: %" PRIu64 "\n", cpu_cnt);
+	}
 	printf("\n\n");
 }
+
 /* cpuinfo implementation end */
 
 /* lsusb implementation */
@@ -299,9 +305,8 @@ void print_lsblk_information(void) {
 			id = block_dev_id(bdevs[i]);
 
 			unit = convert_unit(&size);
-			printf("%4d | %6s         | %8" PRId64 "%s | %s\n",
-				   id, name, size, unit, "disk"
-			);
+			printf("%4" PRIdMAX " | %6s         | %8" PRId64 "%s | %s\n",
+			    (uintmax_t)id, name, size, unit, "disk");
 
 			for (j = 0; j < MAX_BDEV_QUANTITY; j++) {
 				if (bdevs[j] && (bdevs[i] == block_dev_parent(bdevs[j]))) {
@@ -310,10 +315,8 @@ void print_lsblk_information(void) {
 					id = block_dev_id(bdevs[j]);
 
 					unit = convert_unit(&size);
-					printf("%4d | %6s         | %10" PRId64 "%s | %s\n",
-						   id, name, size, unit, "disk"
-					);
-					
+					printf("%4" PRIdMAX " | %6s         | %10" PRId64 "%s | %s\n",
+					    (uintmax_t)id, name, size, unit, "disk");
 				}
 			}
 		}

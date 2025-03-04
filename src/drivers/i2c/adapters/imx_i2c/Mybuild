@@ -1,16 +1,16 @@
 package embox.driver.adapters
 
 module imx_i2c {
-	option number log_level=1
+	option string log_level="LOG_ERR"
 
 	source "imx_i2c.c"
 
 	depends embox.driver.i2c
-	@NoRuntime depends embox.arch.arm.imx.iomuxc
+	@NoRuntime depends platform.imx.drivers.iomuxc
 }
 
 module imx_i2c1 {
-	option number log_level=1
+	option string log_level="LOG_ERR"
 
 	option number base_addr=0x21A0000
 	option number irq_num=68
@@ -20,11 +20,11 @@ module imx_i2c1 {
 
 	@NoRuntime depends imx_i2c
 	depends embox.driver.i2c
-	@NoRuntime depends embox.arch.arm.imx.iomuxc
+	@NoRuntime depends platform.imx.drivers.iomuxc
 }
 
 module imx_i2c2 {
-	option number log_level=1
+	option string log_level="LOG_ERR"
 
 	option number base_addr=0x21A4000
 	option number irq_num=69
@@ -34,11 +34,11 @@ module imx_i2c2 {
 
 	@NoRuntime depends imx_i2c
 	depends embox.driver.i2c
-	@NoRuntime depends embox.arch.arm.imx.iomuxc
+	@NoRuntime depends platform.imx.drivers.iomuxc
 }
 
 module imx_i2c3 {
-	option number log_level=1
+	option string log_level="LOG_ERR"
 
 	option number base_addr=0x21A8000
 	option number irq_num=70
@@ -48,5 +48,5 @@ module imx_i2c3 {
 
 	@NoRuntime depends imx_i2c
 	depends embox.driver.i2c
-	@NoRuntime depends embox.arch.arm.imx.iomuxc
+	@NoRuntime depends platform.imx.drivers.iomuxc
 }

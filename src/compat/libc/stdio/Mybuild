@@ -2,25 +2,22 @@ package embox.compat.libc.stdio
 
 @DefaultImpl(print)
 abstract module print_impl {
-	option number support_floating = 1
 }
 
 static module print extends print_impl {
-	option number support_floating = 1
-	option number stub = 0
+	option number support_floating=1
 
 	source "printf_impl.c"
 	source "printf_impl.h"
 
-	depends embox.compat.libc.math                   // depends from support_floating value
+	@NoRuntime depends embox.compat.libc.math
 	@NoRuntime depends embox.compat.libc.stdlib.core // atoi
-	@NoRuntime depends embox.compat.libc.str         // strlen
+	@NoRuntime depends embox.compat.libc.str
 	@NoRuntime depends embox.compat.libc.type
 }
 
 static module print_stub extends print_impl {
-	option number support_floating = 1
-	option number stub = 1
+	option number support_floating=1
 
 	source "print_stub.c"
 	source "printf_impl.h"
@@ -31,7 +28,6 @@ static module sprintf {
 	source "snprintf.c"
 
 	@NoRuntime depends print_impl
-	@NoRuntime depends embox.lib.libgcc
 }
 
 static module file_pool {
@@ -42,17 +38,17 @@ static module file_pool {
 
 static module open {
 	source "fopen.c"
+
 	depends file_pool
-	depends embox.compat.posix.fs.open
-	depends embox.compat.posix.fs.close
+	@NoRuntime depends embox.compat.posix.file_system
 	@NoRuntime depends embox.compat.libc.str
-	depends embox.compat.posix.idx.dup
+	depends embox.compat.posix.index_descriptor
 }
 
 static module fseek {
 	source "fseek.c"
 
-	depends embox.compat.posix.fs.lseek
+	@NoRuntime depends embox.compat.posix.file_system
 }
 
 static module printf {
@@ -70,7 +66,7 @@ static module printf {
 static module fwrite {
 	source "fwrite.c"
 
-	depends embox.compat.posix.fs.write
+	depends embox.compat.posix.index_descriptor
 	depends embox.kernel.task.resource.errno
 
 	depends funopen
@@ -95,14 +91,14 @@ abstract module stdio_stdstreams {
 
 static module stdio_streams_global extends embox.compat.libc.stdio.stdio_stdstreams {
 	source "stdin_stderr.c"
-	
+
 	source "stdout_global.h"
 	source "stdout_global.c"
 }
 
 static module stdio_streams_task_resource extends embox.compat.libc.stdio.stdio_stdstreams {
 	source "stdin_stderr.c"
-	
+
 	source "stdout_task_resource.h"
 
 	depends embox.kernel.task.resource.stdout
@@ -120,7 +116,6 @@ static module file_struct_header {
 }
 
 static module file_ops {
-
 	source "fgetc.c"
 	source "ungetc.c"
 	source "fgets.c"
@@ -132,7 +127,7 @@ static module file_ops {
 	source "clearerr.c"
 
 	source "fread.c"
-	depends embox.compat.posix.fs.read
+	@NoRuntime depends embox.compat.posix.index_descriptor
 
 	source "fioctl.c"
 	source "fflush.c"
@@ -142,7 +137,7 @@ static module file_ops {
 
 	depends file_struct_header
 	depends file_pool
-	depends embox.compat.posix.fs.file_ops
+	@NoRuntime depends embox.compat.posix.file_system
 
 	source "printf.c"
 	source "fprintf.c"
@@ -154,32 +149,13 @@ static module file_ops {
 	depends fwrite
 	depends embox.compat.libc.stdio.stdio_stdstreams
 }
-
-@DefaultImpl(rename_old)
-
-abstract module rename {
-}
-
-static module rename_old extends rename {
-	source "rename.c"
-}
-
-static module rename_dvfs extends rename {
-	source "rename_dvfs.c"
-
-	depends embox.fs.dvfs.core
-	depends embox.compat.libc.str
-	depends open
-	depends file_ops
-}
-
+	
 static module all {
-	@NoRuntime depends rename
 	@NoRuntime depends sprintf
 	@NoRuntime depends open
 	@NoRuntime depends fseek
 	@NoRuntime depends file_ops
-	@NoRuntime depends scanf
+	@NoRuntime depends scanf_api
 	@NoRuntime depends perror
 	@NoRuntime depends div
 	@NoRuntime depends tmpfile
@@ -189,7 +165,6 @@ static module all {
 @DefaultImpl(tmpfile_stub)
 abstract module tmpfile {
 }
-
 
 static module tmpfile_stub extends tmpfile {
 	source "tmpfile_stub.c"
@@ -207,11 +182,15 @@ static module perror {
 	source "perror.c"
 }
 
-static module scanf_without_file {
+@DefaultImpl(scanf)
+abstract module scanf_api {
+}
+
+static module scanf_without_file extends scanf_api {
 	source "scanf.c", "scanf_scanchar_without_file.c"
 }
 
-static module scanf {
+static module scanf extends scanf_api {
 	source "scanf.c"
 	source "fscanf.c"
 

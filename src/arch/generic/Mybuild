@@ -18,6 +18,7 @@ module nousermode extends embox.arch.usermode {
 }
 
 module nosmp extends embox.arch.smp {
+	option boolean independent_clock = false
 	source "nosmp.h"
 }
 
@@ -30,10 +31,14 @@ module onecpu extends embox.arch.cpu {
 	source "onecpu.h"
 }
 
-module arch extends embox.arch.arch {
-	source "arch.c"
-}
-
 module cache_stub extends embox.arch.cache {
 	source "cache_stub.c"
 }
+
+module cpu_idle_stub extends embox.arch.cpu_idle {
+	source "cpu_idle_stub.h"
+}
+
+module no_libarch extends embox.arch.libarch { }
+
+module reg_stub extends embox.arch.reg { }

@@ -21,7 +21,7 @@
 #include <stddef.h>
 #include <stdbool.h>
 
-#include <util/dlist.h>
+#include <lib/libds/dlist.h>
 
 #include <kernel/irq.h>
 #include <kernel/irq_lock.h>
@@ -179,5 +179,13 @@ void irq_dispatch(unsigned int irq_nr) {
 			ipl = ipl_save();
 		}
 		ipl_restore(ipl);
+	}
+}
+
+void irq_enable_attached(void) {
+	for(int irq_nr = 0; irq_nr < IRQ_NRS_TOTAL; irq_nr++) {
+		if(irq_table[irq_nr]) {
+			irqctrl_enable(irq_nr);
+		}
 	}
 }

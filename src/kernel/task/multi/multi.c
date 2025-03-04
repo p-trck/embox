@@ -89,6 +89,11 @@ int new_task(const char *name, void * (*run)(void *), void *arg) {
 	int res, tid;
 	rlim_t stack_sz;
 
+	/**
+	 * stack_sz has effect only when task_quantity has value
+	 * AND (USE_USER_STACK == 0). Otherwise stack_sz will be
+	 * replaced by STACK_SZ
+	 */
 	stack_sz = task_get_stack_size(task_self());
 	stack_sz += sizeof (struct task) + TASK_RESOURCE_SIZE;
 
@@ -110,8 +115,8 @@ int new_task(const char *name, void * (*run)(void *), void *arg) {
 		 */
 		thd = main_thread_create(THREAD_FLAG_NOTASK | THREAD_FLAG_SUSPENDED,
 				stack_sz, task_trampoline, NULL);
-		if (0 != err(thd)) {
-			res = err(thd);
+		if (0 != ptr2err(thd)) {
+			res = ptr2err(thd);
 			goto out_unlock;
 		}
 
@@ -207,6 +212,11 @@ int task_prepare(const char *name) {
 	int res, tid;
 	rlim_t stack_sz;
 
+	/**
+	 * stack_sz has effect only when task_quantity has value
+	 * AND (USE_USER_STACK == 0). Otherwise stack_sz will be
+	 * replaced by STACK_SZ
+	 */
 	stack_sz = task_get_stack_size(task_self());
 	stack_sz += sizeof (struct task) + TASK_RESOURCE_SIZE;
 
@@ -222,8 +232,8 @@ int task_prepare(const char *name) {
 		 */
 		thd = main_thread_create(THREAD_FLAG_NOTASK | THREAD_FLAG_SUSPENDED,
 				stack_sz, task_trampoline, NULL);
-		if (0 != err(thd)) {
-			res = err(thd);
+		if (0 != ptr2err(thd)) {
+			res = ptr2err(thd);
 			goto out_unlock;
 		}
 

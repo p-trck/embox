@@ -6,6 +6,7 @@ struct uart_conf uarts[] = {
 		.status = DISABLED,
 		.name = "USART1",
 		.dev = {
+			.name = "USART1",
 			.irqs = {
 				VAL("", 37),
 			},
@@ -25,6 +26,7 @@ struct uart_conf uarts[] = {
 		.status = DISABLED,
 		.name = "USART2",
 		.dev = {
+			.name = "USART2",
 			.irqs = {
 				VAL("", 38),
 			},
@@ -44,6 +46,7 @@ struct uart_conf uarts[] = {
 		.status = DISABLED,
 		.name = "USART3",
 		.dev = {
+			.name = "USART3",
 			.irqs = {
 				VAL("", 71),
 			},
@@ -54,7 +57,7 @@ struct uart_conf uarts[] = {
 			.clocks = {
 				VAL("TX",   CLK_GPIOB),
 				VAL("RX",   CLK_GPIOB),
-				VAL("UART", CLK_USART6),
+				VAL("UART", CLK_USART3),
 			}
 		},
 		.baudrate = 115200,
@@ -69,6 +72,7 @@ struct pwm_conf pwms[] = {
 		.servo_low = VAL("LOW", 430),
 		.servo_high = VAL("HIGH", 2175),
 		.dev = {
+			.name = "PWM0",
 			.pins = {
 				PIN("TIM",  PD, PIN_4, AF2),
 			},
@@ -85,41 +89,49 @@ struct led_conf leds[] = {
 		.name = "LED3",
 		.port = VAL("", GPIO_PORT_E),
 		.pin = VAL("", 9),
+		.level = VAL("", GPIO_PIN_HIGH),
 	},
 	[1] = {
 		.name = "LED4",
 		.port = VAL("", GPIO_PORT_E),
 		.pin = VAL("", 8),
+		.level = VAL("", GPIO_PIN_HIGH),
 	},
 	[2] = {
 		.name = "LED5",
 		.port = VAL("", GPIO_PORT_E),
 		.pin = VAL("", 10),
+		.level = VAL("", GPIO_PIN_HIGH),
 	},
 	[3] = {
 		.name = "LED6",
 		.port = VAL("", GPIO_PORT_E),
 		.pin = VAL("PIN", 15),
+		.level = VAL("", GPIO_PIN_HIGH),
 	},
 	[4] = {
 		.name = "LED7",
 		.port = VAL("", GPIO_PORT_E),
 		.pin = VAL("", 11),
+		.level = VAL("", GPIO_PIN_HIGH),
 	},
 	[5] = {
 		.name = "LED8",
 		.port = VAL("", GPIO_PORT_E),
 		.pin = VAL("", 14),
+		.level = VAL("", GPIO_PIN_HIGH),
 	},
 	[6] = {
 		.name = "LED9",
 		.port = VAL("", GPIO_PORT_E),
 		.pin = VAL("", 12),
+		.level = VAL("", GPIO_PIN_HIGH),
 	},
 	[7] = {
 		.name = "LED10",
 		.port = VAL("PORT", GPIO_PORT_E),
 		.pin = VAL("PIN", 13),
+		.level = VAL("", GPIO_PIN_HIGH),
 	},
 };
 
@@ -128,11 +140,12 @@ struct spi_conf spis[] = {
 		.status = ENABLED,
 		.name = "SPI1",
 		.dev = {
+			.name = "SPI1",
 			.pins = {
-				PIN("SCK",  PB, PIN_5, AF5),
-				PIN("MISO", PB, PIN_6, AF5),
-				PIN("MOSI", PB, PIN_7, AF5),
-				/* PIN("CS",   PB, PIN_2, NOAF), */
+				PIN("SCK",  GPIO_PORT_B, PIN_5, AF5),
+				PIN("MISO", GPIO_PORT_B, PIN_6, AF5),
+				PIN("MOSI", GPIO_PORT_B, PIN_7, AF5),
+				/* PIN("CS",   GPIO_PORT_B, PIN_2, NOAF), */
 			},
 			.clocks = {
 				VAL("SCK",  CLK_GPIOA),

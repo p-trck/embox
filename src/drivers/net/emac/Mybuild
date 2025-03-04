@@ -1,7 +1,7 @@
 package embox.driver.net
 
 module emac {
-	option number log_level		= 1
+	option string log_level="LOG_ERR"
 	option number prep_buff_cnt	= 128 /* the number of prepared buffers for rxing */
 	option number emac_base         = 0x4A100000
 	option number emac_ctrl_base    = 0x4A100900
@@ -24,6 +24,6 @@ module emac {
 	depends embox.kernel.irq
 	depends embox.net.dev
 	depends embox.net.entry_api
-	depends embox.util.dlist
+	@NoRuntime depends embox.lib.libds
 	depends embox.net.util.show_packet
 }

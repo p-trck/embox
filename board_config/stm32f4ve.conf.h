@@ -6,6 +6,7 @@ struct uart_conf uarts[] = {
 		.status = ENABLED,
 		.name = "USART1",
 		.dev = {
+			.name = "USART1",
 			.irqs = {
 				VAL("", 37),
 			},
@@ -25,6 +26,7 @@ struct uart_conf uarts[] = {
 		.status = DISABLED,
 		.name = "USART2",
 		.dev = {
+			.name = "USART2",
 			.irqs = {
 				VAL("", 38),
 			},
@@ -44,6 +46,7 @@ struct uart_conf uarts[] = {
 		.status = DISABLED,
 		.name = "USART6",
 		.dev = {
+			.name = "USART6",
 			.irqs = {
 				VAL("", 71),
 			},
@@ -66,11 +69,12 @@ struct spi_conf spis[] = {
 		.status = DISABLED,
 		.name = "SPI1",
 		.dev = {
+			.name = "SPI1",
 			.pins = {
-				PIN("SCK",  PB, PIN_3, AF5),
-				PIN("MISO", PB, PIN_4, AF5),
-				PIN("MOSI", PB, PIN_5, AF5),
-				PIN("CS",   PB, PIN_2, NOAF),
+				PIN("SCK",  GPIO_PORT_B, PIN_3, AF5),
+				PIN("MISO", GPIO_PORT_B, PIN_4, AF5),
+				PIN("MOSI", GPIO_PORT_B, PIN_5, AF5),
+				PIN("CS",   GPIO_PORT_B, PIN_2, NOAF),
 			},
 			.clocks = {
 				VAL("SCK",  CLK_GPIOB),
@@ -85,11 +89,12 @@ struct spi_conf spis[] = {
 		.status = DISABLED,
 		.name = "SPI2",
 		.dev = {
+			.name = "SPI2",
 			.pins = {
-				PIN("SCK",  PB, PIN_13, AF5),
-				PIN("MISO", PB, PIN_14, AF5),
-				PIN("MOSI", PB, PIN_15, AF5),
-				PIN("CS",   PB, PIN_12, NOAF),
+				PIN("SCK",  GPIO_PORT_B, PIN_13, AF5),
+				PIN("MISO", GPIO_PORT_B, PIN_14, AF5),
+				PIN("MOSI", GPIO_PORT_B, PIN_15, AF5),
+				PIN("CS",   GPIO_PORT_B, PIN_12, NOAF),
 			},
 			.clocks = {
 				VAL("SCK",  CLK_GPIOB),
@@ -110,6 +115,7 @@ struct pwm_conf pwms[] = {
 		.servo_low = VAL("LOW", 200),
 		.servo_high = VAL("HIGH", 1350),
 		.dev = {
+			.name = "PWM0",
 			.pins = {
 				PIN("TIM",  PB, PIN_6, AF2),
 			},

@@ -1,7 +1,7 @@
 package embox.driver.gpu
 
 module ldb {
-	option number log_level=0
+	option string log_level="LOG_NONE"
 
 	option number base_addr=0x20e0008
 	option number data_width=18
@@ -12,5 +12,5 @@ module ldb {
 
 	depends embox.driver.clk.ccm_imx6
 	depends embox.driver.video.fb
-	@NoRuntime depends embox.arch.arm.imx.iomuxc
+	@NoRuntime depends platform.imx.drivers.iomuxc
 }

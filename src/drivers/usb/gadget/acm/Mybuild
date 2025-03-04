@@ -1,18 +1,17 @@
 package embox.driver.usb.gadget
 
 module f_acm {
-	option number log_level = 1
+	option string log_level="LOG_ERR"
 
 	source "f_acm.c"
 	source "acm_tty.c"
 
-  depends embox.driver.char_dev
   depends embox.driver.serial.core
   depends embox.driver.serial.diag
 }
 
 module acm_gadget {
-	option number log_level = 1
+	option string log_level="LOG_ERR"
 
 	source "acm_gadget.c"
 

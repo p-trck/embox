@@ -3,14 +3,254 @@
  *
  * @date Aug 22, 2013
  * @author: Anton Bondarev
+ * @author: Aleksey Zhmulin
  */
 
-#ifndef INTTYPES_H_
-#define INTTYPES_H_
+#ifndef COMPAT_LIBC_INTTYPES_H_
+#define COMPAT_LIBC_INTTYPES_H_
 
-/* The <inttypes.h> header shall include the <stdint.h> header. */
-#include <stdint.h>
 #include <stddef.h>
+#include <stdint.h> /* The <inttypes.h> header shall include the <stdint.h> header. */
+#include <sys/cdefs.h>
+
+#include <util/macro.h>
+
+#define __PRI_TYPE__
+#define __PRI_TYPE__int         int,
+#define __PRI_TYPE__long        long,
+#define __PRI_TYPE__char        char,
+#define __PRI_TYPE__short       short,
+#define __PRI_TYPE__signed      signed,
+#define __PRI_TYPE__unsigned    unsigned,
+#define __PRI_TYPE_APPEND(a, b) __PRI_TYPE__##a b
+#define __PRI_TYPE(...)         MACRO_FOREACH(__PRI_TYPE_APPEND, __VA_ARGS__)
+
+#define __PRI_PREFIX__
+#define __PRI_PREFIX__int
+#define __PRI_PREFIX__long  "l"
+#define __PRI_PREFIX__char  "hh"
+#define __PRI_PREFIX__short "h"
+#define __PRI_PREFIX__signed
+#define __PRI_PREFIX__unsigned
+#define __PRI_PREFIX_APPEND(a, b) __PRI_PREFIX__##a b
+#define __PRI_PREFIX(type) \
+	MACRO_FOREACH(__PRI_PREFIX_APPEND, __PRI_TYPE(__PRI_TYPE(__PRI_TYPE(type))))
+
+#define __PRI_PREFIX_INT8    __PRI_PREFIX(__INT8_TYPE__)
+#define __PRI_PREFIX_INT16   __PRI_PREFIX(__INT16_TYPE__)
+#define __PRI_PREFIX_INT32   __PRI_PREFIX(__INT32_TYPE__)
+#define __PRI_PREFIX_INT64   __PRI_PREFIX(__INT64_TYPE__)
+
+#define __PRI_PREFIX_LEAST8  __PRI_PREFIX(__INT_LEAST8_TYPE__)
+#define __PRI_PREFIX_LEAST16 __PRI_PREFIX(__INT_LEAST16_TYPE__)
+#define __PRI_PREFIX_LEAST32 __PRI_PREFIX(__INT_LEAST32_TYPE__)
+#define __PRI_PREFIX_LEAST64 __PRI_PREFIX(__INT_LEAST64_TYPE__)
+
+#define __PRI_PREFIX_FAST8   __PRI_PREFIX(__INT_FAST8_TYPE__)
+#define __PRI_PREFIX_FAST16  __PRI_PREFIX(__INT_FAST16_TYPE__)
+#define __PRI_PREFIX_FAST32  __PRI_PREFIX(__INT_FAST32_TYPE__)
+#define __PRI_PREFIX_FAST64  __PRI_PREFIX(__INT_FAST64_TYPE__)
+
+#define __PRI_PREFIX_MAX     __PRI_PREFIX(__INTMAX_TYPE__)
+#define __PRI_PREFIX_PTR     __PRI_PREFIX(__INTPTR_TYPE__)
+
+#define PRId8                __PRI_PREFIX_INT8 "d"
+#define PRIi8                __PRI_PREFIX_INT8 "i"
+#define PRIo8                __PRI_PREFIX_INT8 "o"
+#define PRIu8                __PRI_PREFIX_INT8 "u"
+#define PRIx8                __PRI_PREFIX_INT8 "x"
+#define PRIX8                __PRI_PREFIX_INT8 "X"
+
+#define PRId16               __PRI_PREFIX_INT16 "d"
+#define PRIi16               __PRI_PREFIX_INT16 "i"
+#define PRIo16               __PRI_PREFIX_INT16 "o"
+#define PRIu16               __PRI_PREFIX_INT16 "u"
+#define PRIx16               __PRI_PREFIX_INT16 "x"
+#define PRIX16               __PRI_PREFIX_INT16 "X"
+
+#define PRId32               __PRI_PREFIX_INT32 "d"
+#define PRIi32               __PRI_PREFIX_INT32 "i"
+#define PRIo32               __PRI_PREFIX_INT32 "o"
+#define PRIu32               __PRI_PREFIX_INT32 "u"
+#define PRIx32               __PRI_PREFIX_INT32 "x"
+#define PRIX32               __PRI_PREFIX_INT32 "X"
+
+#define PRId64               __PRI_PREFIX_INT64 "d"
+#define PRIi64               __PRI_PREFIX_INT64 "i"
+#define PRIo64               __PRI_PREFIX_INT64 "o"
+#define PRIu64               __PRI_PREFIX_INT64 "u"
+#define PRIx64               __PRI_PREFIX_INT64 "x"
+#define PRIX64               __PRI_PREFIX_INT64 "X"
+
+#define PRIdLEAST8           __PRI_PREFIX_LEAST8 "d"
+#define PRIiLEAST8           __PRI_PREFIX_LEAST8 "i"
+#define PRIoLEAST8           __PRI_PREFIX_LEAST8 "o"
+#define PRIuLEAST8           __PRI_PREFIX_LEAST8 "u"
+#define PRIxLEAST8           __PRI_PREFIX_LEAST8 "x"
+#define PRIXLEAST8           __PRI_PREFIX_LEAST8 "X"
+
+#define PRIdLEAST16          __PRI_PREFIX_LEAST16 "d"
+#define PRIiLEAST16          __PRI_PREFIX_LEAST16 "i"
+#define PRIoLEAST16          __PRI_PREFIX_LEAST16 "o"
+#define PRIuLEAST16          __PRI_PREFIX_LEAST16 "u"
+#define PRIxLEAST16          __PRI_PREFIX_LEAST16 "x"
+#define PRIXLEAST16          __PRI_PREFIX_LEAST16 "X"
+
+#define PRIdLEAST32          __PRI_PREFIX_LEAST32 "d"
+#define PRIiLEAST32          __PRI_PREFIX_LEAST32 "i"
+#define PRIoLEAST32          __PRI_PREFIX_LEAST32 "o"
+#define PRIuLEAST32          __PRI_PREFIX_LEAST32 "u"
+#define PRIxLEAST32          __PRI_PREFIX_LEAST32 "x"
+#define PRIXLEAST32          __PRI_PREFIX_LEAST32 "X"
+
+#define PRIdLEAST64          __PRI_PREFIX_LEAST64 "d"
+#define PRIiLEAST64          __PRI_PREFIX_LEAST64 "i"
+#define PRIoLEAST64          __PRI_PREFIX_LEAST64 "o"
+#define PRIuLEAST64          __PRI_PREFIX_LEAST64 "u"
+#define PRIxLEAST64          __PRI_PREFIX_LEAST64 "x"
+#define PRIXLEAST64          __PRI_PREFIX_LEAST64 "X"
+
+#define PRIdFAST8            __PRI_PREFIX_FAST8 "d"
+#define PRIiFAST8            __PRI_PREFIX_FAST8 "i"
+#define PRIoFAST8            __PRI_PREFIX_FAST8 "o"
+#define PRIuFAST8            __PRI_PREFIX_FAST8 "u"
+#define PRIxFAST8            __PRI_PREFIX_FAST8 "x"
+#define PRIXFAST8            __PRI_PREFIX_FAST8 "X"
+
+#define PRIdFAST16           __PRI_PREFIX_FAST16 "d"
+#define PRIiFAST16           __PRI_PREFIX_FAST16 "i"
+#define PRIoFAST16           __PRI_PREFIX_FAST16 "o"
+#define PRIuFAST16           __PRI_PREFIX_FAST16 "u"
+#define PRIxFAST16           __PRI_PREFIX_FAST16 "x"
+#define PRIXFAST16           __PRI_PREFIX_FAST16 "X"
+
+#define PRIdFAST32           __PRI_PREFIX_FAST32 "d"
+#define PRIiFAST32           __PRI_PREFIX_FAST32 "i"
+#define PRIoFAST32           __PRI_PREFIX_FAST32 "o"
+#define PRIuFAST32           __PRI_PREFIX_FAST32 "u"
+#define PRIxFAST32           __PRI_PREFIX_FAST32 "x"
+#define PRIXFAST32           __PRI_PREFIX_FAST32 "X"
+
+#define PRIdFAST64           __PRI_PREFIX_FAST64 "d"
+#define PRIiFAST64           __PRI_PREFIX_FAST64 "i"
+#define PRIoFAST64           __PRI_PREFIX_FAST64 "o"
+#define PRIuFAST64           __PRI_PREFIX_FAST64 "u"
+#define PRIxFAST64           __PRI_PREFIX_FAST64 "x"
+#define PRIXFAST64           __PRI_PREFIX_FAST64 "X"
+
+#define PRIdMAX              __PRI_PREFIX_MAX "d"
+#define PRIiMAX              __PRI_PREFIX_MAX "i"
+#define PRIoMAX              __PRI_PREFIX_MAX "o"
+#define PRIuMAX              __PRI_PREFIX_MAX "u"
+#define PRIxMAX              __PRI_PREFIX_MAX "x"
+#define PRIXMAX              __PRI_PREFIX_MAX "X"
+
+#define PRIdPTR              __PRI_PREFIX_PTR "d"
+#define PRIiPTR              __PRI_PREFIX_PTR "i"
+#define PRIoPTR              __PRI_PREFIX_PTR "o"
+#define PRIuPTR              __PRI_PREFIX_PTR "u"
+#define PRIxPTR              __PRI_PREFIX_PTR "x"
+#define PRIXPTR              __PRI_PREFIX_PTR "X"
+
+#define SCNd8                __PRI_PREFIX_INT8 "d"
+#define SCNi8                __PRI_PREFIX_INT8 "i"
+#define SCNo8                __PRI_PREFIX_INT8 "o"
+#define SCNu8                __PRI_PREFIX_INT8 "u"
+#define SCNx8                __PRI_PREFIX_INT8 "x"
+#define SCNX8                __PRI_PREFIX_INT8 "X"
+
+#define SCNd16               __PRI_PREFIX_INT16 "d"
+#define SCNi16               __PRI_PREFIX_INT16 "i"
+#define SCNo16               __PRI_PREFIX_INT16 "o"
+#define SCNu16               __PRI_PREFIX_INT16 "u"
+#define SCNx16               __PRI_PREFIX_INT16 "x"
+#define SCNX16               __PRI_PREFIX_INT16 "X"
+
+#define SCNd32               __PRI_PREFIX_INT32 "d"
+#define SCNi32               __PRI_PREFIX_INT32 "i"
+#define SCNo32               __PRI_PREFIX_INT32 "o"
+#define SCNu32               __PRI_PREFIX_INT32 "u"
+#define SCNx32               __PRI_PREFIX_INT32 "x"
+#define SCNX32               __PRI_PREFIX_INT32 "X"
+
+#define SCNd64               __PRI_PREFIX_INT64 "d"
+#define SCNi64               __PRI_PREFIX_INT64 "i"
+#define SCNo64               __PRI_PREFIX_INT64 "o"
+#define SCNu64               __PRI_PREFIX_INT64 "u"
+#define SCNx64               __PRI_PREFIX_INT64 "x"
+#define SCNX64               __PRI_PREFIX_INT64 "X"
+
+#define SCNdLEAST8           __PRI_PREFIX_LEAST8 "d"
+#define SCNiLEAST8           __PRI_PREFIX_LEAST8 "i"
+#define SCNoLEAST8           __PRI_PREFIX_LEAST8 "o"
+#define SCNuLEAST8           __PRI_PREFIX_LEAST8 "u"
+#define SCNxLEAST8           __PRI_PREFIX_LEAST8 "x"
+#define SCNXLEAST8           __PRI_PREFIX_LEAST8 "X"
+
+#define SCNdLEAST16          __PRI_PREFIX_LEAST16 "d"
+#define SCNiLEAST16          __PRI_PREFIX_LEAST16 "i"
+#define SCNoLEAST16          __PRI_PREFIX_LEAST16 "o"
+#define SCNuLEAST16          __PRI_PREFIX_LEAST16 "u"
+#define SCNxLEAST16          __PRI_PREFIX_LEAST16 "x"
+#define SCNXLEAST16          __PRI_PREFIX_LEAST16 "X"
+
+#define SCNdLEAST32          __PRI_PREFIX_LEAST32 "d"
+#define SCNiLEAST32          __PRI_PREFIX_LEAST32 "i"
+#define SCNoLEAST32          __PRI_PREFIX_LEAST32 "o"
+#define SCNuLEAST32          __PRI_PREFIX_LEAST32 "u"
+#define SCNxLEAST32          __PRI_PREFIX_LEAST32 "x"
+#define SCNXLEAST32          __PRI_PREFIX_LEAST32 "X"
+
+#define SCNdLEAST64          __PRI_PREFIX_LEAST64 "d"
+#define SCNiLEAST64          __PRI_PREFIX_LEAST64 "i"
+#define SCNoLEAST64          __PRI_PREFIX_LEAST64 "o"
+#define SCNuLEAST64          __PRI_PREFIX_LEAST64 "u"
+#define SCNxLEAST64          __PRI_PREFIX_LEAST64 "x"
+#define SCNXLEAST64          __PRI_PREFIX_LEAST64 "X"
+
+#define SCNdFAST8            __PRI_PREFIX_FAST8 "d"
+#define SCNiFAST8            __PRI_PREFIX_FAST8 "i"
+#define SCNoFAST8            __PRI_PREFIX_FAST8 "o"
+#define SCNuFAST8            __PRI_PREFIX_FAST8 "u"
+#define SCNxFAST8            __PRI_PREFIX_FAST8 "x"
+#define SCNXFAST8            __PRI_PREFIX_FAST8 "X"
+
+#define SCNdFAST16           __PRI_PREFIX_FAST16 "d"
+#define SCNiFAST16           __PRI_PREFIX_FAST16 "i"
+#define SCNoFAST16           __PRI_PREFIX_FAST16 "o"
+#define SCNuFAST16           __PRI_PREFIX_FAST16 "u"
+#define SCNxFAST16           __PRI_PREFIX_FAST16 "x"
+#define SCNXFAST16           __PRI_PREFIX_FAST16 "X"
+
+#define SCNdFAST32           __PRI_PREFIX_FAST32 "d"
+#define SCNiFAST32           __PRI_PREFIX_FAST32 "i"
+#define SCNoFAST32           __PRI_PREFIX_FAST32 "o"
+#define SCNuFAST32           __PRI_PREFIX_FAST32 "u"
+#define SCNxFAST32           __PRI_PREFIX_FAST32 "x"
+#define SCNXFAST32           __PRI_PREFIX_FAST32 "X"
+
+#define SCNdFAST64           __PRI_PREFIX_FAST64 "d"
+#define SCNiFAST64           __PRI_PREFIX_FAST64 "i"
+#define SCNoFAST64           __PRI_PREFIX_FAST64 "o"
+#define SCNuFAST64           __PRI_PREFIX_FAST64 "u"
+#define SCNxFAST64           __PRI_PREFIX_FAST64 "x"
+#define SCNXFAST64           __PRI_PREFIX_FAST64 "X"
+
+#define SCNdMAX              __PRI_PREFIX_MAX "d"
+#define SCNiMAX              __PRI_PREFIX_MAX "i"
+#define SCNoMAX              __PRI_PREFIX_MAX "o"
+#define SCNuMAX              __PRI_PREFIX_MAX "u"
+#define SCNxMAX              __PRI_PREFIX_MAX "x"
+#define SCNXMAX              __PRI_PREFIX_MAX "X"
+
+#define SCNdPTR              __PRI_PREFIX_PTR "d"
+#define SCNiPTR              __PRI_PREFIX_PTR "i"
+#define SCNoPTR              __PRI_PREFIX_PTR "o"
+#define SCNuPTR              __PRI_PREFIX_PTR "u"
+#define SCNxPTR              __PRI_PREFIX_PTR "x"
+#define SCNXPTR              __PRI_PREFIX_PTR "X"
+
+__BEGIN_DECLS
 
 /**
  * imaxdiv_t - Structure type that is the type of the value returned by the
@@ -20,9 +260,6 @@ typedef struct {
 	intmax_t quot;
 	intmax_t rem;
 } imaxdiv_t;
-
-#include <sys/cdefs.h>
-__BEGIN_DECLS
 
 /* The following shall be declared as functions and may also be defined as
  * macros. Function prototypes shall be provided.
@@ -67,29 +304,11 @@ extern imaxdiv_t imaxdiv(intmax_t numer, intmax_t denom);
  *   to the return type and sign of the value, if any), and errno shall be set
  *   to [ERANGE].
  */
-extern intmax_t strtoimax(const char */*restrict*/ nptr, char **/*restrict*/ endptr,
-		int base);
+extern intmax_t strtoimax(const char * /*restrict*/ nptr,
+    char ** /*restrict*/ endptr, int base);
 
-extern uintmax_t strtoumax(const char */*restrict*/ nptr, char **/*restrict*/ endptr,
-		int base);
-
-/**
- * The function shall be equivalent to the wcstol(), wcstoll(), wcstoul(),
- * and wcstoull() functions, respectively, except that the initial portion of
- * the wide string shall be converted to intmax_t and uintmax_t representation,
- * respectively.
- *
- * @param nptr
- * @param endptr
- * @param base
- * @return The function shall return the converted value, if any.
- *   If no conversion could be performed, zero shall be returned. If the correct
- *   value is outside the range of representable values, {INTMAX_MAX},
- *   {INTMAX_MIN}, or {UINTMAX_MAX} shall be returned (according to the return
- *   type and sign of the value, if any), and errno shall be set to [ERANGE].
- */
-extern intmax_t wcstoimax(const wchar_t */*restrict*/ nptr,
-		wchar_t **/*restrict*/ endptr, int base);
+extern uintmax_t strtoumax(const char * /*restrict*/ nptr,
+    char ** /*restrict*/ endptr, int base);
 
 /**
  * The function shall be equivalent to the wcstol(), wcstoll(), wcstoul(),
@@ -106,276 +325,37 @@ extern intmax_t wcstoimax(const wchar_t */*restrict*/ nptr,
  *   {INTMAX_MIN}, or {UINTMAX_MAX} shall be returned (according to the return
  *   type and sign of the value, if any), and errno shall be set to [ERANGE].
  */
-extern uintmax_t wcstoumax(const wchar_t */*restrict*/ nptr,
-		wchar_t **/*restrict*/ endptr, int base);
+extern intmax_t wcstoimax(const wchar_t * /*restrict*/ nptr,
+    wchar_t ** /*restrict*/ endptr, int base);
+
+/**
+ * The function shall be equivalent to the wcstol(), wcstoll(), wcstoul(),
+ * and wcstoull() functions, respectively, except that the initial portion of
+ * the wide string shall be converted to intmax_t and uintmax_t representation,
+ * respectively.
+ *
+ * @param nptr
+ * @param endptr
+ * @param base
+ * @return The function shall return the converted value, if any.
+ *   If no conversion could be performed, zero shall be returned. If the correct
+ *   value is outside the range of representable values, {INTMAX_MAX},
+ *   {INTMAX_MIN}, or {UINTMAX_MAX} shall be returned (according to the return
+ *   type and sign of the value, if any), and errno shall be set to [ERANGE].
+ */
+extern uintmax_t wcstoumax(const wchar_t * /*restrict*/ nptr,
+    wchar_t ** /*restrict*/ endptr, int base);
 
 __END_DECLS
-
-/* The fprintf() macros for signed integers are:
- * PRIdN PRIdLEASTN PRIdFASTN PRIdMAX PRIdPTR PRIiN PRIiLEASTN PRIiFASTN
- * PRIiMAX PRIiPTR*/
-#define    PRId8       "d"
-#define    PRIdLEAST8  "d"
-#define    PRIdFAST8   "d"
-#define    PRIi8       "i"
-#define    PRIiLEAST8  "i"
-#define    PRIiFAST8   "i"
-
-#define    PRId16      "d"
-#define    PRIdLEAST16 "d"
-#define    PRIdFAST16  "d"
-#define    PRIi16      "i"
-#define    PRIiLEAST16 "i"
-#define    PRIiFAST16  "i"
-
-#if defined(__mips__) || defined(__sparc__) || defined(__microblaze__) || defined(__PPC__)
-#define    PRId32      "ld"
-#define    PRIdLEAST32 "ld"
-#define    PRIdFAST32  "ld"
-#define    PRIi32      "li"
-#define    PRIiLEAST32 "li"
-#define    PRIiFAST32  "li"
-#elif defined (i386) || defined (__e2k__) || defined(__aarch64__) \
-		|| (defined(__riscv) && defined(__LP64__)) \
-		|| (defined(__arm__) && !defined(__ARM_ARCH_6M__))
-#define    PRId32      "d"
-#define    PRIdLEAST32 "d"
-#define    PRIdFAST32  "d"
-#define    PRIi32      "i"
-#define    PRIiLEAST32 "i"
-#define    PRIiFAST32  "i"
-#else
-#define    PRId32      "ld"
-#define    PRIdLEAST32 "ld"
-#define    PRIdFAST32  "ld"
-#define    PRIi32      "li"
-#define    PRIiLEAST32 "li"
-#define    PRIiFAST32  "li"
-#endif
-
-#define    PRIdPTR     PRId32
-#define    PRIiPTR     PRIi32
-
-#define    PRIdMAX     PRId64
-#define    PRIiMAX     PRIi32
-
-/* The fprintf() macros for unsigned integers are:
- * PRIoN PRIoLEASTN PRIoFASTN PRIoMAX PRIoPTR PRIuN PRIuLEASTN PRIuFASTN
- * PRIuMAX PRIuPTR PRIxN PRIxLEASTN PRIxFASTN PRIxMAX PRIxPTR PRIXN PRIXLEASTN
- * PRIXFASTN PRIXMAX PRIXPTR
- */
-#define    PRIo8       "o"
-#define    PRIoLEAST8  "o"
-#define    PRIoFAST8   "o"
-#define    PRIu8       "u"
-#define    PRIuLEAST8  "u"
-#define    PRIuFAST8   "u"
-#define    PRIx8       "x"
-#define    PRIxLEAST8  "x"
-#define    PRIxFAST8   "x"
-#define    PRIX8       "X"
-#define    PRIXLEAST8  "X"
-#define    PRIXFAST8   "X"
-
-#define    PRIo16      "o"
-#define    PRIoLEAST16 "o"
-#define    PRIoFAST16  "o"
-#define    PRIu16      "u"
-#define    PRIuLEAST16 "u"
-#define    PRIuFAST16  "u"
-#define    PRIx16      "x"
-#define    PRIxLEAST16 "x"
-#define    PRIxFAST16  "x"
-#define    PRIX16      "X"
-#define    PRIXLEAST16 "X"
-#define    PRIXFAST16  "X"
-
-
-#if (defined(__riscv) && !defined(__gnu_linux__) && !defined(__LP64__)) || defined (__e2k__) || \
-	(defined(__mips__) && !defined(__gnu_linux__)) || defined(__sparc__) || \
-	defined(__microblaze__) || defined(__PPC__) || (defined(__arm__) && defined(__ARM_ARCH_6M__))
-#define    PRIo32      "lo"
-#define    PRIoLEAST32 "lo"
-#define    PRIoFAST32  "lo"
-#define    PRIu32      "lu"
-#define    PRIuLEAST32 "lu"
-#define    PRIuFAST32  "lu"
-#define    PRIx32      "lx"
-#define    PRIxLEAST32 "lx"
-#define    PRIxFAST32  "lx"
-#define    PRIX32      "lX"
-#define    PRIXLEAST32 "lX"
-#define    PRIXFAST32  "lX"
-
-#define    PRIu64      "llu"
-#define    PRIi64      "lli"
-#define    PRIx64      "llx"
-#define    PRIX64      "llX"
-#define    PRId64      "lld"
-
-#elif (defined(__arm__) && !defined(__ARM_ARCH_6M__)) || defined (i386) || \
-	(defined(__mips__) && defined(__gnu_linux__)) || defined(__aarch64__)
-
-#define    PRIo32      "o"
-#define    PRIoLEAST32 "o"
-#define    PRIoFAST32  "o"
-#define    PRIu32      "u"
-#define    PRIuLEAST32 "u"
-#define    PRIuFAST32  "u"
-#define    PRIx32      "x"
-#define    PRIxLEAST32 "x"
-#define    PRIxFAST32  "x"
-#define    PRIX32      "X"
-#define    PRIXLEAST32 "X"
-#define    PRIXFAST32  "X"
-
-#define    PRIu64      "llu"
-#define    PRIi64      "lli"
-#define    PRIx64      "llx"
-#define    PRIX64      "llX"
-#define    PRId64      "lld"
-
-#elif defined(__aarch64__)
-#define    PRIo32      "o"
-#define    PRIoLEAST32 "o"
-#define    PRIoFAST32  "o"
-#define    PRIu32      "u"
-#define    PRIuLEAST32 "u"
-#define    PRIuFAST32  "u"
-#define    PRIx32      "x"
-#define    PRIxLEAST32 "x"
-#define    PRIxFAST32  "x"
-#define    PRIX32      "X"
-#define    PRIXLEAST32 "X"
-#define    PRIXFAST32  "X"
-
-#define    PRIu64      "u"
-#define    PRIi64      "i"
-#define    PRIx64      "x"
-#define    PRIX64      "X"
-#define    PRId64      "d"
-#else
-
-#define    PRIo32      "o"
-#define    PRIoLEAST32 "o"
-#define    PRIoFAST32  "o"
-#define    PRIu32      "u"
-#define    PRIuLEAST32 "u"
-#define    PRIuFAST32  "u"
-#define    PRIx32      "x"
-#define    PRIxLEAST32 "x"
-#define    PRIxFAST32  "x"
-#define    PRIX32      "X"
-#define    PRIXLEAST32 "X"
-#define    PRIXFAST32  "X"
-
-#define    PRIu64      "lu"
-#define    PRIi64      "li"
-#define    PRIx64      "lx"
-#define    PRIX64      "lX"
-#define    PRId64      "ld"
-
-#endif
-
-#if defined (__e2k__)
-
-#define    PRIoPTR     PRIo32
-#define    PRIuPTR     PRIu32
-#define    PRIxPTR     "llx"
-#define    PRIXPTR     "llX"
-
-#elif defined (i386) || (defined(__arm__) && !defined(__ARM_ARCH_6M__)) || \
-	defined(__mips__) || defined(__sparc__) || defined(__microblaze__) || defined(__PPC__)
-
-#define    PRIoPTR     PRIo32
-#define    PRIuPTR     PRIu32
-#define    PRIxPTR     "x"
-#define    PRIXPTR     "X"
-
-#elif defined(__aarch64__) || (defined(__riscv) && defined(__LP64__))
-
-#define    PRIoPTR     PRIo64
-#define    PRIuPTR     PRIu64
-#define    PRIxPTR     "lx"
-#define    PRIXPTR     "lX"
-
-#else
-
-#define    PRIoPTR     PRIo32
-#define    PRIuPTR     PRIu32
-#define    PRIxPTR     "x"
-#define    PRIXPTR     "X"
-
-#endif
-
-#define    PRIoMAX     PRIo32
-#define    PRIuMAX     PRIu64
-#define    PRIxMAX     PRIx64
-#define    PRIXMAX     PRIX64
-
-/* The fscanf() macros for signed integers are:
- * SCNdN SCNdLEASTN SCNdFASTN SCNdMAX SCNdPTR SCNiN SCNiLEASTN SCNiFASTN
- * SCNiMAX SCNiPTR
- */
-#define    SCNd16        "d"
-#define    SCNdLEAST16   "d"
-#define    SCNdFAST16    "d"
-#define    SCNi16        "i"
-#define    SCNiLEAST16   "i"
-#define    SCNiFAST16    "i"
-
-
-#define    SCNd32        "d"
-#define    SCNdLEAST32   "d"
-#define    SCNdFAST32    "d"
-#define    SCNi32        "i"
-#define    SCNiLEAST32   "i"
-#define    SCNiFAST32    "i"
-
-#define    SCNdPTR       SCNd32
-#define    SCNiPTR       SCNi32
-
-#define    SCNdMAX       SCNd32
-#define    SCNiMAX       SCNi32
-
-/* The fscanf() macros for unsigned integers are:
- * SCNoN SCNoLEASTN SCNoFASTN SCNoMAX SCNoPTR SCNuN SCNuLEASTN SCNuFASTN
- * SCNuMAX SCNuPTR SCNxN SCNxLEASTN SCNxFASTN SCNxMAX SCNxPTR
- */
-#define    SCNo16        "o"
-#define    SCNoLEAST16   "o"
-#define    SCNoFAST16    "o"
-#define    SCNu16        "u"
-#define    SCNuLEAST16   "u"
-#define    SCNuFAST16    "u"
-#define    SCNx16        "x"
-#define    SCNxLEAST16   "x"
-#define    SCNxFAST16    "x"
-#define    SCNo32        "o"
-#define    SCNoLEAST32   "o"
-#define    SCNoFAST32    "o"
-#define    SCNu32        "u"
-#define    SCNuLEAST32   "u"
-#define    SCNuFAST32    "u"
-#define    SCNx32        "x"
-#define    SCNxLEAST32   "x"
-#define    SCNxFAST32    "x"
-
-#define    SCNoPTR       SCNo32
-#define    SCNuPTR       SCNu32
-#define    SCNxPTR       SCNx32
-
-#define    SCNoMAX       SCNo32
-#define    SCNuMAX       SCNu32
-#define    SCNxMAX       SCNx32
 
 //TODO this is C99 standard. It's required for mruby
 #if 0
 #ifndef NAN
-#define 	NAN   __builtin_nan("")
+#define NAN __builtin_nan("")
 #endif
 #ifndef INFINITY
-#define 	INFINITY   __builtin_inf()
+#define INFINITY __builtin_inf()
 #endif
 #endif
-#endif /* INTTYPES_H_ */
+
+#endif /* COMPAT_LIBC_INTTYPES_H_ */

@@ -1,0 +1,127 @@
+package embox.driver.flash
+
+@BuildDepends(third_party.bsp.st_bsp_api)
+module stm32cube_flash_common {
+	option string log_level="LOG_ERR"
+
+	source "stm32_flash_common.c"
+
+	depends third_party.bsp.st_bsp_api
+}
+
+@BuildDepends(third_party.bsp.st_bsp_api)
+module stm32h7cube extends flash_in_chip {
+	option string log_level="LOG_ERR"
+	option number flash_size=0x40000
+	option number flash_sector_size=0x20000 /* 128 Kb */
+
+	source "stm32_flash.c"	
+
+	@IncludeExport(path="drivers/block_dev/flash",target_name="stm32flash.h")
+	source "stm32h7flash.h"
+
+	depends stm32cube_flash_common
+
+	depends third_party.bsp.st_bsp_api
+	depends core
+}
+
+@BuildDepends(third_party.bsp.st_bsp_api)
+module stm32l4cube extends flash_in_chip {
+	option string log_level="LOG_ERR"
+	option number flash_size=0x02000
+	option number flash_sector_size=0x800 /* 2Kb */
+
+	source "stm32_flash.c"
+
+	@IncludeExport(path="drivers/block_dev/flash",target_name="stm32flash.h")
+	source "stm32l4flash.h"
+
+	depends stm32cube_flash_common
+
+	depends third_party.bsp.st_bsp_api
+	depends core
+}
+
+@BuildDepends(third_party.bsp.st_bsp_api)
+module stm32f7cube extends flash_in_chip {
+	option string log_level="LOG_ERR"
+	option number flash_size=0x18000
+	option number flash_sector_size=0x8000 /* 32 Kb */
+
+	source "stm32_flash.c"
+
+	@IncludeExport(path="drivers/block_dev/flash",target_name="stm32flash.h")
+	source "stm32f7flash.h"
+
+	depends stm32cube_flash_common
+
+	depends third_party.bsp.st_bsp_api
+	depends core
+}
+
+@BuildDepends(third_party.bsp.st_bsp_api)
+module stm32f4cube extends flash_in_chip {
+	option string log_level="LOG_ERR"
+	option number flash_size=0xc000
+	option number flash_sector_size=0x4000 /* 16 Kb */
+
+	source "stm32_flash.c"
+
+	@IncludeExport(path="drivers/block_dev/flash",target_name="stm32flash.h")
+	source "stm32f4flash.h"
+
+	depends stm32cube_flash_common
+
+	depends third_party.bsp.st_bsp_api
+	depends core
+}
+
+@BuildDepends(third_party.bsp.st_bsp_api)
+module stm32f3cube extends flash_in_chip {
+	option string log_level="LOG_ERR"
+	option number flash_size=0x10000
+	option number flash_sector_size=0x800 /* 2 Kb */
+
+	source "stm32_flash.c"
+
+	@IncludeExport(path="drivers/block_dev/flash",target_name="stm32flash.h")
+	source "stm32f3flash.h"
+
+	depends stm32cube_flash_common
+
+	depends third_party.bsp.st_bsp_api
+	depends core
+}
+
+@BuildDepends(third_party.bsp.st_bsp_api)
+module stm32f2cube extends flash_in_chip {
+	option string log_level="LOG_ERR"
+	option number flash_size=0xc000
+	option number flash_sector_size=0x4000 /* 16 Kb */
+
+	source "stm32_flash.c"
+
+	@IncludeExport(path="drivers/block_dev/flash",target_name="stm32flash.h")
+	source "stm32f2flash.h"
+
+	depends stm32cube_flash_common
+
+	depends third_party.bsp.st_bsp_api
+	depends core
+}
+
+@BuildDepends(third_party.bsp.st_bsp_api)
+module stm32cube_fix_addr {
+	option string log_level="LOG_ERR"
+
+	option number flash_start_addr
+	option number flash_end_addr
+
+	source "stm32_flash_fix_addr.c"
+
+	depends stm32cube_flash_common
+
+	depends third_party.bsp.st_bsp_api
+	depends core
+}

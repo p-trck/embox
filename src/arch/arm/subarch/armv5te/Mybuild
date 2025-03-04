@@ -1,5 +1,5 @@
 package embox.arch.arm.armv5te
-
-module arch extends embox.arch.arch {
-	source "arch.c"
+	
+module cpu_idle extends embox.arch.cpu_idle {
+	source "cpu_idle.h"
 }

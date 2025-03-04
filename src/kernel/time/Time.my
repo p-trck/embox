@@ -6,16 +6,19 @@ module clock_source {
 	
 	option number hnd_priority = 200
 	source "clock_tick.c"
+
+	@NoRuntime depends embox.kernel.timer.strategy.api
 }
 
 module jiffies {
 	/* "cs_name" is one of registered clock sources. */
 	option string cs_name = ""
-	option number hz = 1000
+	option number period = 1000
 
 	source "jiffies.c"
 
 	@NoRuntime depends clock_source
+	@NoRuntime depends timeval
 }
 
 static module timeval {

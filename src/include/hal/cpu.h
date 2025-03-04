@@ -10,20 +10,19 @@
 #define HAL_CPU_H_
 
 #include <framework/mod/options.h>
+
 #include <module/embox/arch/cpu.h>
 #include <module/embox/arch/smp.h>
 
-/* FIXME hack to get abstract module variable */
-#if OPTION_MODULE_DEFINED(embox__arch__cpu, NUMBER, cpu_count)
-# define NCPU OPTION_MODULE_GET(embox__arch__cpu, NUMBER, cpu_count)
-#elif OPTION_MODULE_DEFINED(embox__arch__generic__onecpu, NUMBER, cpu_count)
-# define NCPU OPTION_MODULE_GET(embox__arch__generic__onecpu, NUMBER, cpu_count)
-#elif OPTION_MODULE_DEFINED(embox__arch__x86__kernel__cpu, NUMBER, cpu_count)
-# define NCPU OPTION_MODULE_GET(embox__arch__x86__kernel__cpu, NUMBER, cpu_count)
-#endif
+#include <module/embox/kernel/stack.h>
+
+#define NCPU OPTION_MODULE_GET(embox__arch__cpu, NUMBER, cpu_count)
+
+#define KERNEL_AP_STACK_SZ OPTION_MODULE_GET(embox__kernel__stack, NUMBER, ap_stack_size)
+#define KERNEL_BSP_STACK_SZ OPTION_MODULE_GET(embox__kernel__stack, NUMBER, stack_size)
 
 #ifndef NOSMP
-# define SMP
+#define SMP
 #endif /* NOSMP */
 
 #ifndef __ASSEMBLER__
@@ -31,8 +30,9 @@
 #include <sys/cdefs.h>
 
 __BEGIN_DECLS
+
 /**
- * Get CPU id
+ * @brief Get current CPU id.
  */
 extern unsigned int cpu_get_id(void);
 

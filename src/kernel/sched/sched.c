@@ -20,6 +20,7 @@
 #include <stdbool.h>
 
 #include <util/log.h>
+#include <util/member.h>
 
 #include <sched.h>
 #include <kernel/sched.h>
@@ -32,6 +33,11 @@
 #include <kernel/spinlock.h>
 #include <kernel/sched/sched_strategy.h>
 #include <kernel/sched/current.h>
+#include <kernel/thread.h>
+#include <kernel/task.h>
+#include <kernel/lthread/lthread.h>
+#include <kernel/cpu/cpu.h>
+#include <kernel/time/timer.h>
 
 // XXX
 #ifndef __barrier
@@ -117,12 +123,12 @@ void sched_set_current(struct schedee *schedee) {
 	schedee->waiting = false;
 }
 
-static void sched_check_preempt(struct schedee *t) {
+static void sched_check_preempt(struct schedee *s) {
 	// TODO ask runq
 	if (schedee_priority_get(schedee_get_current()) <=
-			schedee_priority_get(t)) {
+			schedee_priority_get(s)) {
 
-		if (schedee_is_thread(t)) {
+		if (schedee_is_thread(s)) {
 			sched_post_switch(); // TODO SMP
 		} else {
 			sched_post_switch();
@@ -265,8 +271,9 @@ void sched_freeze(struct schedee *s) {
  * SMP add one another tricky corner case. If an event occurs on a remote CPU
  * while the current one performs 'sched_switch' (as prev) the actual enqueuing
  * must be delayed until the thread leaves the scheduler. Otherwise it could
- * be moved to an idle CPU, start 'sched_switch' (as next) thus trashing
- * context of the thread (saved registers state).
+ * be moved to an idle CPU, start 'sched_switch' (as next).
+ * This causes a thread to run on multiple CPUs simultaneously, which will
+ * immediately destroy the thread stack(saved registers state).
  *
  * To overcome this issue an intermediate TW_SMP_WAKING state is introduced
  * which is checked upon returning from 'sched_switch'.
@@ -349,7 +356,18 @@ static inline void __sched_wakeup_smp_inactive(struct schedee *s) {
 int __sched_wakeup(struct schedee *s) {
 	int was_waiting = (s->waiting && s->waiting != TW_SMP_WAKING);
 
-	log_debug("schedee #%x", s);
+	if(s->type == SCHEDEE_THREAD){
+#if 0
+		struct thread * th = mcast_out(s, struct thread, schedee);
+		log_debug("<thread> schedee %#x, taskname %s, event %#x, cpu %d", s, th->task->tsk_name, th->run, cpu_get_id());
+#else
+		log_debug("<thread> schedee %#x, cpu %d", s, cpu_get_id());
+#endif
+	}else{
+		// struct lthread * lth = mcast_out(s, struct lthread, schedee);
+		log_debug("<lthread> schedee %#x, event %#x, cpu %d", s, mcast_out(s, struct lthread, schedee)->run, cpu_get_id());
+	}
+
 
 	if (was_waiting)
 		/* Check if t->ready state is still set, and we can do
@@ -400,6 +418,37 @@ static void sched_ticker_update(void) {
 	cur = schedee_get_current();
 
 	next = runq_get_next(&rq.queue);
+	/**
+	 * If runq_get_next() returns NULL which means the current cpu can't
+	 * get any threads to run. But it doesn't mean other cpu can not get
+	 * threads to run in SMP situation. So at least for current cpu, it's
+	 * no need for thread switching, just delete the sched_tick in current
+	 */
+	if(next == NULL) {
+#ifdef SMP
+		next = runq_get_next_ignore_affinity(&rq.queue);
+		extern void smp_send_resched(int cpu_id);
+		if(next != NULL) {
+			unsigned int affinity_mask = sched_affinity_get(&next->affinity);
+			for(int cpuid = 0, mask = affinity_mask; mask != 0; mask = mask >> 1, cpuid++) {
+				if((mask & 0x1) && \
+				/**
+				 * In situation for example, threads all have affinity to cpu A
+				 * but first actual scheduling happens on cpu B. CPU A will never
+				 * get a chance to add it's own sched_tick_timer, which means
+				 * CPU A will never wake up clock_hander'bottom half never scheduling
+				 */
+				0 == (((struct sys_timer*)sched_ticker_get_timer())->timer_sharing->shared_cpu & affinity_mask) && \
+				/* check target cpu is on idle thread for safety */
+				cpu_get_idle(cpuid)->schedee.active == 0x1){
+				   smp_send_resched(cpuid);
+				}
+			}
+		}
+#endif
+		sched_ticker_del();
+		return;
+	}
 
 	cur_prio = schedee_priority_get(cur);
 	next_prio = schedee_priority_get(next);
@@ -440,7 +489,9 @@ static void __schedule(int preempt) {
 	sched_timing_stop(prev);
 
 	while (1) {
+		/* when called from here, it must NOT be empty*/
 		next = runq_get_next(&rq.queue);
+		assert(next);
 
 		if (schedee_is_thread(prev) && schedee_is_thread(next) &&
 			    schedee_priority_get(prev) == schedee_priority_get(next)) {
@@ -469,11 +520,12 @@ static void __schedule(int preempt) {
 		spin_unlock(&rq.lock);
 
 		schedee_set_current(next);
-		log_debug("prev: %#x, next: %#x", prev, next);
+		log_debug("prev: %#x, next: %#x, cpu: %d", prev, next, cpu_get_id());
 
 		/* next->process has to enable ipl. */
 		next = next->process(prev, next);
 
+		/* lthread always return 0, need to find a thread to break loop */
 		if (next) {
 			break;
 		}

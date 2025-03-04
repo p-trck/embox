@@ -14,7 +14,7 @@
 #include <drivers/mmc/mmc_core.h>
 #include <drivers/mmc/mmc_host.h>
 #include <mem/misc/pool.h>
-#include <util/indexator.h>
+#include <lib/libds/indexator.h>
 #include <util/log.h>
 
 #define MMC_DEV_QUANTITY OPTION_GET(NUMBER, dev_quantity)
@@ -258,6 +258,6 @@ void mmc_dump_cid(uint32_t *cid) {
 
 	log_debug("Date             %s %d", mon_name[man_mon], man_year);
 
-	/* Avoid warnings if log_level = 0 */
+	/* Avoid warnings if log_level is low */
 	(void) man_year, (void) man_mon, (void) mon_name;
 }

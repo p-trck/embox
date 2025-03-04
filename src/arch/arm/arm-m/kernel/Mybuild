@@ -1,0 +1,62 @@
+
+package embox.arch.arm.armmlib
+
+@DefaultImpl(cpu_cache_none)
+abstract module cpu_cache_api { }
+
+module cpu_cache_none extends cpu_cache_api {
+	@IncludeExport(path="arm", target_name="cpu_cache.h")
+	source "cpu_cache_none.h"
+}
+
+module irq_static extends embox.kernel.irq_static_impl {
+	source "irq_static_impl.h"
+}
+
+module irq_entry {
+	source "irq_entry.S"
+}
+
+module lthread_own_stack {
+	option number stack_size = 1024
+
+	source "lthread_process.S"
+}
+
+module exception_entry {
+	option string log_level="LOG_EMERG"
+
+	option number irq_stack_size = 1024
+	option number irq_stack_in_bss = 0
+
+	source "exception_table.S"
+	source "exception_table.lds.S"
+	source "exception_handlers.c"
+
+	@IncludeExport(path="arm", target_name="exception.h")
+	source "exception.h"
+
+	depends irq_static
+}
+
+module locore extends embox.arch.locore {
+	depends embox.arch.arm.head
+	depends irq_entry
+	depends exception_entry
+}
+
+module ipl extends embox.arch.interrupt {
+	source "ipl_impl.h"
+}
+
+module context extends embox.arch.context {
+	source "context.c",
+		"context.h",
+		"context_switch.S"
+
+	depends embox.arch.arm.fpu.fpu
+}
+
+module cpu_idle extends embox.arch.cpu_idle {
+	source "cpu_idle.h"
+}

@@ -11,6 +11,7 @@
 
 #include "stm32_spi.h"
 
+#include <drivers/gpio/gpio.h>
 #include <drivers/spi.h>
 #include <kernel/irq.h>
 #include <util/log.h>
@@ -80,6 +81,12 @@ int stm32_spi_init(struct stm32_spi *dev, void *instance) {
 	return stm32_spi_setup(dev, instance, true);
 }
 
+static int stm32_spi_init1(struct spi_device *dev) {
+	if (((struct stm32_spi*)(dev->priv))->hw_init != NULL)
+		return ((struct stm32_spi*)(dev->priv))->hw_init();
+	else	return -1;
+}
+
 static int stm32_spi_select(struct spi_device *dev, int cs) {
 	log_debug("NIY");
 
@@ -104,8 +111,8 @@ static int stm32_spi_transfer(struct spi_device *dev, uint8_t *inbuf,
 
 	if (dev->flags & SPI_CS_ACTIVE && dev->is_master) {
 		/* Note: we suppose that there's a single slave device
-		 * on the SPI bus, so we lower the same pin all the tiem */
-		HAL_GPIO_WritePin(priv->nss_port, priv->nss_pin, GPIO_PIN_RESET);
+		 * on the SPI bus, so we lower the same pin all the time */
+		gpio_set(priv->nss_port, priv->nss_pin, GPIO_PIN_LOW);
 	}
 
 	ret = HAL_SPI_TransmitReceive(handle, inbuf, outbuf, count, 5000);
@@ -118,14 +125,15 @@ static int stm32_spi_transfer(struct spi_device *dev, uint8_t *inbuf,
 
 	if (dev->flags & SPI_CS_INACTIVE && dev->is_master) {
 		/* Note: we suppose that there's a single slave device
-		 * on the SPI bus, so we raise the same pin all the tiem */
-		HAL_GPIO_WritePin(priv->nss_port, priv->nss_pin, GPIO_PIN_SET);
+		 * on the SPI bus, so we raise the same pin all the time */
+		gpio_set(priv->nss_port, priv->nss_pin, GPIO_PIN_HIGH);
 	}
 
 	return 0;
 }
 
 struct spi_ops stm32_spi_ops = {
+	.init     = stm32_spi_init1,
 	.select   = stm32_spi_select,
 	.set_mode = stm32_spi_set_mode,
 	.transfer = stm32_spi_transfer

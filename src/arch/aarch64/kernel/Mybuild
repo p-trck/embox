@@ -1,23 +1,21 @@
 package embox.arch.aarch64
 
-module arch extends embox.arch.arch {
-	source "arch.c"
-}
-
 module interrupt extends embox.arch.interrupt {
 	source "ipl_impl.h"
 
-	depends locore
+	@NoRuntime depends locore
 }
 
 module locore extends embox.arch.locore {
-	depends exception_table
-}
-
-module exception_table {
-	source "exception_table.S"
+	@NoRuntime depends reg
+	@NoRuntime depends exceptions
+	@NoRuntime depends reset_handler
 }
 
 module mem_barriers extends embox.arch.mem_barriers {
 	source "mem_barriers.h"
+}
+
+module cpu_idle extends embox.arch.cpu_idle {
+	source "cpu_idle.h"
 }

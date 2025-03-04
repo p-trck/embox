@@ -18,7 +18,7 @@
 #include <limits.h>
 #include <stddef.h>
 
-#include <util/array.h>
+#include <lib/libds/array.h>
 
 #define DD_DEFAULT_BS        512
 
@@ -248,9 +248,13 @@ int main(int argc, char **argv) {
 out_cmd:
 	free(tbuf);
 out_ofd_close:
-	close(ofd);
+	if (ofd != STDOUT_FILENO) {
+		close(ofd);
+	}
 out_ifd_close:
-	close(ifd);
+	if (ofd != STDIN_FILENO) {
+		close(ifd);
+	}
 out:
 	return err;
 }

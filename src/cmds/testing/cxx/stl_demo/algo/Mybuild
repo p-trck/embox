@@ -1,13 +1,25 @@
 package embox.cmd.testing.cxx
 
 @AutoCmd
-@Cmd(name="stl_demo_sort1",
+@CxxCmd(name="stl_demo_sort1",
 	help="example for stl algo sort",
 	man="")
 @BuildDepends(embox.lib.libstdcxx)
 @Build(stage=2,script="true")
 module stl_demo_sort1 {
 	source "sort1.cpp"
+
+	@NoRuntime depends embox.lib.libstdcxx
+}
+
+@AutoCmd
+@CxxCmd(name="stl_demo_sort1",
+	help="example for stl algo sort",
+	man="")
+@BuildDepends(embox.lib.libstdcxx)
+@Build(stage=2,script="true")
+module stl_demo_min_test {
+	source "min_test.cpp"
 
 	@NoRuntime depends embox.lib.libstdcxx
 }

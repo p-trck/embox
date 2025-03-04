@@ -109,7 +109,7 @@ EXTERNAL_MAKE_FLAGS = \
 			MKGEN_DIR \
 			AUTOCONF_DIR \
 			ROOTFS_DIR \
-			INCUDE_INSTALL_DIR \
+			INCLUDE_INSTALL_DIR \
 			USER_ROOTFS_DIR \
 			DOT_DIR \
 			DOCS_OUT_DIR \
@@ -178,7 +178,7 @@ cppflags_fn = \
 	-D__EMBOX__ \
 	-D__unix \
 	-imacros $(call $1,$(AUTOCONF_DIR))/config.lds.h \
-	-I$(call $1,$(INCUDE_INSTALL_DIR)) \
+	-I$(call $1,$(INCLUDE_INSTALL_DIR)) \
 	-I$(call $1,$(SRC_DIR))/include \
 	-I$(call $1,$(SRC_DIR))/arch/$(ARCH)/include \
 	-I$(call $1,$(SRCGEN_DIR))/include \
@@ -189,7 +189,6 @@ cppflags_fn = \
 	-I$(call $1,$(SRC_DIR))/compat/posix/include \
 	-I$(call $1,$(SRC_DIR))/compat/bsd/include \
 	-I$(call $1,$(SRC_DIR))/compat/libc/include \
-	-I$(abspath $(SRC_DIR)/compat/cxx/include) \
 	-nostdinc \
 	-MMD -MP# -MT $@ -MF $(@:.o=.d)
 
@@ -260,11 +259,9 @@ override CXXFLAGS = $(COMMON_CCFLAGS)
 #override CXXFLAGS += -fno-rtti
 #override CXXFLAGS += -fno-exceptions
 #override CXXFLAGS += -fno-threadsafe-statics
-override CXXFLAGS += -I$(abspath $(SRC_DIR)/compat/cxx/include)
 #	C++ has build-in type bool
 override CXXFLAGS += -DSTDBOOL_H_
 override CXXFLAGS += $(cxxflags)
-override CXXFLAGS += -std=gnu++11
 
 # Compiler flags
 cflags := $(CFLAGS)

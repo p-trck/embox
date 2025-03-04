@@ -1,0 +1,25 @@
+
+package embox.arch.arm.cortexm3
+
+module bundle {
+	@NoRuntime depends embox.arch.arm.armmlib.locore
+	@NoRuntime depends embox.arch.arm.armmlib.ipl
+	@NoRuntime depends embox.arch.arm.armmlib.context
+	depends embox.arch.arm.armmlib.cpu_cache_api
+}
+
+module armv7m_cpu_cache extends embox.arch.arm.armmlib.cpu_cache_api {
+	option string log_level="LOG_ERR"
+
+	option number sram_nocache_section_size=0x0
+	option number nocache_region0_addr=0x0
+	option number nocache_region0_size=0x0
+	option number nocache_region1_addr=0x0
+	option number nocache_region1_size=0x0
+
+	source "armv7m_cpu_cache.c"
+	source "mpu_nocache_regions.lds.S"
+
+	@IncludeExport(path="arm", target_name="cpu_cache.h")
+	source "cpu_cache.h"
+}

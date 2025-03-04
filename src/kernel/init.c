@@ -8,13 +8,16 @@
  * @author Eldar Abusalimov
  */
 
-#include <hal/arch.h>
-#include <hal/ipl.h>
 #include <drivers/diag.h>
 #include <drivers/irqctrl.h>
-#include <embox/runlevel.h>
-#include <kernel/printk.h>
+#include <framework/mod/runlevel.h>
+#include <hal/cpu_idle.h>
+#include <hal/ipl.h>
+#include <hal/platform.h>
 #include <kernel/kgdb.h>
+#include <kernel/klog.h>
+#include <kernel/printk.h>
+#include <util/log.h>
 
 static void kernel_init(void);
 static int init(void);
@@ -36,7 +39,7 @@ void kernel_start(void) {
 	system_start();
 
 	while (1) {
-		arch_idle();
+		arch_cpu_idle();
 	}
 }
 
@@ -45,7 +48,7 @@ void kernel_start(void) {
  * further memory configuration, initialization of drivers, devices.
  */
 static void kernel_init(void) {
-	arch_init();
+	platform_init();
 
 	ipl_init();
 
@@ -53,8 +56,10 @@ static void kernel_init(void) {
 
 	printk("\n");
 
+	klog_init();
+
 	irqctrl_init();
-	printk("Interrupt controller: %s\n", irqctrl_get()->name);
+	log_info("Interrupt controller: %s", irqctrl_get()->name);
 }
 
 /**
@@ -65,7 +70,7 @@ static int init(void) {
 	int ret;
 	const runlevel_nr_t target_level = RUNLEVEL_NRS_ENABLED - 1;
 
-	printk("\nEmbox kernel start\n");
+	log_info("Embox kernel start");
 
 	ret = runlevel_set(target_level);
 

@@ -1,14 +1,14 @@
 Embox [![Coverity Scan Build Status](https://scan.coverity.com/projects/700/badge.svg)](https://scan.coverity.com/projects/700)
 =====
 
-Embox is a configurable RTOS designed for resource constrained and embedded systems. Embox main idea is using Linux software without Linux.
+Embox is a configurable RTOS designed for resource constrained and embedded systems. Embox's main idea is to use Linux software without Linux.
 
 Achievements
 -------------
 * [VoIP phone on STM32F7Discovery based on PJSIP project](https://github.com/embox/embox/wiki/PJSIP-on-STM32)
 * [Qt on STM32F7Discovery](https://github.com/embox/embox/wiki/Qt-on-STM32)
 * [OpenCV on STM32F769i board](https://github.com/embox/embox/wiki/OpenCV-on-STM32)
-* A lot of programming languages available: Python, Lisp, Java (phoneme), TCL, Ruby, Lua, JS, Scheme
+* A lot of programming languages are available: Python, Lisp, Java (phoneme), TCL, Ruby, Lua, JS, Scheme
 * SSHD based on Dropbear project
 * Mesa3d
 * Quake3
@@ -21,7 +21,7 @@ Key features
 * C++ support
 * File systems: FAT, ext2/3/4, ...
 * TCP/IP: BSD sockets; supported protocols: UDP, HTTP, ARP, NTP, ICMP, ...
-* Cross-platform: ARM, MIPS, x86, Microblaze, SPARC, PowerPC, E2K
+* Cross-platform: ARM, MIPS, x86, RISC-V, Microblaze, SPARC, PowerPC, E2K
 * Popular platforms: STM32, i.MX6, RaPi, ...
 * Provides popular desktop software on MCU (e.g. STM32): Qt, OpenCV, PJSIP, dropbear, ...
 * Unix-like shell utilities: ls, cat, mount, ...
@@ -61,11 +61,17 @@ $ sudo apt-get install build-essential gcc-multilib curl libmpc-dev python
 For Arch Linux:
 ```
 $ sudo pacman -S make gcc-multilib cpio qemu
+$ yay -S python2-bin
 ```
 
-For MAC OS X (requires [MacPorts](https://www.macports.org/install.php) installed):
+For Fedora Linux:
 ```
-$ sudo port install i386-elf-gcc i386-elf-binutils cpio gawk qemu
+$ sudo dnf install make gcc cpio qemu patch curl python
+```
+
+For MAC OS X (requires [Homebrew](https://brew.sh/) installed):
+```
+$ brew install i686-elf-binutils i686-elf-gcc awk cpio qemu python
 ```
 
 For any system with Docker (more info on wiki [Emdocker](https://github.com/embox/embox/wiki/Emdocker)):
@@ -84,7 +90,7 @@ Since Embox is highly configurable project, it is necessary to specify modules t
 All commands described below are called from the `embox` directory, which includes `src/`, `templates/`, ...
 
 #### Configuring the project
-For configuring it is needed to specify params and modules supposed to be included into the system. There are two ways to set up a current config:
+For configuring it is necessary to specify parameters and modules supposed to be included into the system. There are two ways to set up a current config:
 
 * `make confload-<template> -` build artefacts generated in a fixed place
 * `./confset <template> -` build artefacts maintained in project dependent working paths

@@ -15,7 +15,7 @@ module net_entry extends entry_api {
 }
 
 module net_rx {
-	option number log_level = 0
+	option string log_level="LOG_NONE"
 	source "net_rx.c"
 
 	depends net_crypt_api
@@ -23,11 +23,11 @@ module net_rx {
 	depends packet
 	depends net_pack
 	depends af_packet_api /* make af_packet socket receive incoming packets */
-	depends embox.util.log
+	@NoRuntime depends embox.lib.libds
 }
 
 module net_tx {
-	option number log_level = 0
+	option string log_level="LOG_NONE"
 	source "net_tx.c"
 
 	depends net_entry 
@@ -36,7 +36,7 @@ module net_tx {
 	depends af_packet_api /* make af_packet socket receive outcoming packets */
 	depends neighbour
 	depends embox.net.entry_api
-	depends embox.util.log
+	@NoRuntime depends embox.lib.libds
 }
 
 @DefaultImpl(net_no_crypt)

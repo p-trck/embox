@@ -110,16 +110,16 @@ static struct thread *__thread_create(unsigned int flags, size_t stack_sz,
 	/* check mutually exclusive flags */
 	if ((flags & THREAD_FLAG_PRIORITY_LOWER)
 			&& (flags & THREAD_FLAG_PRIORITY_HIGHER)) {
-		return err_ptr(EINVAL);
+		return err2ptr(EINVAL);
 	}
 
 	if((flags & THREAD_FLAG_NOTASK) && !(flags & THREAD_FLAG_SUSPENDED)) {
-		return err_ptr(EINVAL);
+		return err2ptr(EINVAL);
 	}
 
 	/* check correct executive function */
 	if (!run) {
-		return err_ptr(EINVAL);
+		return err2ptr(EINVAL);
 	}
 
 	/* calculate current thread priority. It can be change later with
@@ -135,7 +135,7 @@ static struct thread *__thread_create(unsigned int flags, size_t stack_sz,
 	{
 		/* allocate memory */
 		if (!(t = thread_alloc(stack_sz))) {
-			t = err_ptr(ENOMEM);
+			t = err2ptr(ENOMEM);
 			goto out_unlock;
 		}
 
@@ -296,6 +296,19 @@ void thread_delete(struct thread *t) {
 	}
 }
 
+/**
+ * Say we have thread A and thread B and
+ * thread B is the one which is going to exit and delete
+ * Case 1: thread A call thread_join() before thread B exit:
+ *     Thread A set the joining filed of thread B. When thread B
+ *     exit after, it will give control back to thread A again.
+ *     In other word, thread B is deleted by thread A in this case
+ * Case 2: thread B call thread_exit first.
+ *     In this case, no blocks happens
+ *     If thread B is detached, it will self-deleted.
+ *     If thread B is joinable, it just set some flags and ret-value,
+ *     thread B deleted when thread A or other thread call thread_join()
+ */
 void _NORETURN thread_exit(void *ret) {
 	struct thread *current = thread_self();
 	struct task *task = task_self();

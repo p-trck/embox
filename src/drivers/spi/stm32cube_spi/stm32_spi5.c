@@ -2,23 +2,21 @@
  * @file
  * @brief
  * @author Denis Deryugin <deryugin.denis@gmail.com>
- * @author Andrew Bursian
  * @version
  * @date 25.12.2019
  */
 
 #include <string.h>
+#include <drivers/gpio/gpio.h>
 #include <drivers/spi.h>
-
-#include <embox/unit.h>
 
 #include "stm32_spi.h"
 
 #include <config/board_config.h>
 
-EMBOX_UNIT_INIT(stm32_spi5_init);
-
+static int stm32_spi5_init(void);
 static struct stm32_spi stm32_spi5 = {
+	.hw_init = stm32_spi5_init,
 #if defined(CONF_SPI5_PIN_CS_PORT)
 	.nss_port = CONF_SPI5_PIN_CS_PORT,
 	.nss_pin  = CONF_SPI5_PIN_CS_NR,
@@ -28,44 +26,33 @@ static struct stm32_spi stm32_spi5 = {
 };
 
 static int stm32_spi5_init(void) {
-	GPIO_InitTypeDef  GPIO_InitStruct;
-
-	CONF_SPI5_CLK_ENABLE_SCK();
-	CONF_SPI5_CLK_ENABLE_MISO();
-	CONF_SPI5_CLK_ENABLE_MOSI();
-#if defined(CONF_SPI5_PIN_CS_PORT)
-	CONF_SPI5_CLK_ENABLE_CS();
-#endif
 	CONF_SPI5_CLK_ENABLE_SPI();
 
+#if defined CONF_SPI5_REGION_BASE
+	stm32_spi_init(&stm32_spi5, (void *) CONF_SPI5_REGION_BASE);
+#else
 	stm32_spi_init(&stm32_spi5, SPI5);
+#endif	/* CONF_SPI5_REGION_BASE */
 
-	memset(&GPIO_InitStruct, 0, sizeof(GPIO_InitStruct));
-	GPIO_InitStruct.Pin       = CONF_SPI5_PIN_SCK_NR;
-	GPIO_InitStruct.Mode      = GPIO_MODE_AF_PP;
-	GPIO_InitStruct.Pull      = GPIO_PULLUP;
-	GPIO_InitStruct.Speed     = GPIO_SPEED_FAST;
-	GPIO_InitStruct.Alternate = CONF_SPI5_PIN_SCK_AF;
-	HAL_GPIO_Init(CONF_SPI5_PIN_SCK_PORT, &GPIO_InitStruct);
+	gpio_setup_mode(CONF_SPI5_PIN_SCK_PORT, CONF_SPI5_PIN_SCK_NR,
+		GPIO_MODE_OUT_ALTERNATE | GPIO_ALTERNATE(CONF_SPI5_PIN_SCK_AF) |
+		GPIO_MODE_OUT_PUSH_PULL | GPIO_MODE_IN_PULL_UP);
 
-	GPIO_InitStruct.Pin = CONF_SPI5_PIN_MISO_NR;
-	GPIO_InitStruct.Alternate = CONF_SPI5_PIN_MISO_AF;
-	HAL_GPIO_Init(CONF_SPI5_PIN_MISO_PORT, &GPIO_InitStruct);
+	gpio_setup_mode(CONF_SPI5_PIN_MISO_PORT, CONF_SPI5_PIN_MISO_NR,
+		GPIO_MODE_OUT_ALTERNATE | GPIO_ALTERNATE(CONF_SPI5_PIN_MISO_AF) |
+		GPIO_MODE_OUT_PUSH_PULL | GPIO_MODE_IN_PULL_UP);
 
-	GPIO_InitStruct.Pin = CONF_SPI5_PIN_MOSI_NR;
-	GPIO_InitStruct.Alternate = CONF_SPI5_PIN_MOSI_AF;
-	HAL_GPIO_Init(CONF_SPI5_PIN_MOSI_PORT, &GPIO_InitStruct);
+	gpio_setup_mode(CONF_SPI5_PIN_MOSI_PORT, CONF_SPI5_PIN_MOSI_NR,
+		GPIO_MODE_OUT_ALTERNATE | GPIO_ALTERNATE(CONF_SPI5_PIN_MOSI_AF) |
+		GPIO_MODE_OUT_PUSH_PULL | GPIO_MODE_IN_PULL_UP);
 
 #if defined(CONF_SPI5_PIN_CS_PORT)
 	/* Chip Select is usual GPIO pin. */
-	GPIO_InitStruct.Pin       = CONF_SPI5_PIN_CS_NR;
-	GPIO_InitStruct.Mode      = GPIO_MODE_OUTPUT_PP;
-	GPIO_InitStruct.Pull      = GPIO_PULLUP;
-	GPIO_InitStruct.Speed     = GPIO_SPEED_FAST;
-	HAL_GPIO_Init(CONF_SPI5_PIN_CS_PORT, &GPIO_InitStruct);
-
+	gpio_setup_mode(CONF_SPI5_PIN_CS_PORT, CONF_SPI5_PIN_CS_NR,
+		GPIO_MODE_OUT | GPIO_MODE_OUT_PUSH_PULL | GPIO_MODE_IN_PULL_UP);
+		
 	/* Chip Select is in inactive state by default. */
-	HAL_GPIO_WritePin(CONF_SPI5_PIN_CS_PORT, CONF_SPI5_PIN_CS_NR, GPIO_PIN_SET);
+	gpio_set(CONF_SPI5_PIN_CS_PORT, CONF_SPI5_PIN_CS_NR, GPIO_PIN_HIGH);
 #endif
 
 	return 0;

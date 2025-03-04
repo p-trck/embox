@@ -1,0 +1,12 @@
+package embox.util
+
+@Mandatory
+static module log {
+	option string max_log_level="LOG_DEBUG"
+
+	@IncludeExport(path="util")
+	source "log.h"
+	source "log.c"
+	source "mod_logger.c"
+	source "static_logger.c"
+}

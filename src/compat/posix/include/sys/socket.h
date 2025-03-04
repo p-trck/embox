@@ -244,7 +244,7 @@ MSG_WAITALL    Wait for complete message.
 //#define SOL_ICMP    1   /* No-no-no! Due to Linux :-) we cannot use SOL_ICMP=1 */
 #define SOL_TCP     6
 #define SOL_UDP     17
-//#define SOL_IPV6    41
+#define SOL_IPV6    41
 //#define SOL_ICMPV6  58
 //#define SOL_SCTP    132
 //#define SOL_UDPLITE 136 /* UDP-Lite (RFC 3828) */
@@ -456,6 +456,16 @@ extern int getsockopt(int sockfd, int level, int optname,
  */
 extern int setsockopt(int sockfd, int level, int optname,
 		const void *optval, socklen_t optlen);
+/**
+ * The socketpair() call creates an unnamed pair of connected
+ *      sockets in the specified domain, of the specified type, and using
+ *      the optionally specified protocol.  For further details of these
+ *      arguments, see socket(2).
+ *      The file descriptors used in referencing the new sockets are
+ *      returned in sv[0] and sv[1].  The two sockets are
+ *      indistinguishable.
+ */
+extern int socketpair(int domain, int type, int protocol, int sv[2]);
 
 __END_DECLS
 

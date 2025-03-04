@@ -1,9 +1,9 @@
-#include <stdio.h>
+#include <assert.h>
 #include <ctype.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <stdlib.h>
-#include <assert.h>
 
 #include "gen_board_conf.h"
 
@@ -28,8 +28,8 @@ static int gen_prop_ival(const char *dev_name, const char *pr_name, int val) {
 	printf("%s\n", buf);
 }
 
-static int gen_field_int(const char *dev_name,
-		const char *prop_name, const struct field_int *f) {
+static int gen_field_int(const char *dev_name, const char *prop_name,
+    const struct field_int *f) {
 	char buf[128];
 	char def[64];
 
@@ -38,15 +38,14 @@ static int gen_field_int(const char *dev_name,
 	}
 
 	if (!strcmp(f->name, "")) {
-		sprintf(def, "#define CONF_%s_%s",
-			dev_name, prop_name);
-	} else {
+		sprintf(def, "#define CONF_%s_%s", dev_name, prop_name);
+	}
+	else {
 		if (prop_name != NULL && strlen(prop_name) != 0) {
-			sprintf(def, "#define CONF_%s_%s_%s",
-					dev_name, prop_name, f->name);
-		} else {
-			sprintf(def, "#define CONF_%s_%s",
-					dev_name, f->name);
+			sprintf(def, "#define CONF_%s_%s_%s", dev_name, prop_name, f->name);
+		}
+		else {
+			sprintf(def, "#define CONF_%s_%s", dev_name, f->name);
 		}
 	}
 	sprintf(buf, "%-50s %s", def, f->val);
@@ -55,8 +54,40 @@ static int gen_field_int(const char *dev_name,
 	return 0;
 }
 
-static int gen_field_func(const char *dev_name,
-		const char *prop_name, const struct field_int *f) {
+static int gen_field_reg_map(const char *dev_name, const char *prop_name,
+    const struct field_reg_map *f) {
+	char buf[128];
+	char def[64];
+	char def_len[64];
+
+	if (!f->name) {
+		return -1;
+	}
+
+	if (!strcmp(f->name, "")) {
+		sprintf(def, "#define CONF_%s_%s", dev_name, prop_name);
+		sprintf(def_len, "#define CONF_%s_%s_LEN", dev_name, prop_name);
+	}
+	else {
+		if (prop_name != NULL && strlen(prop_name) != 0) {
+			sprintf(def, "#define CONF_%s_%s_%s", dev_name, prop_name, f->name);
+			sprintf(def_len, "#define CONF_%s_%s_%s_LEN", dev_name, prop_name,
+			    f->name);
+		}
+		else {
+			sprintf(def, "#define CONF_%s_%s", dev_name, f->name);
+			sprintf(def_len, "#define CONF_%s_%s_LEN", dev_name, f->name);
+		}
+	}
+	sprintf(buf, "%-50s %s", def, f->baseaddr);
+	printf("%s\n", buf);
+	sprintf(buf, "%-50s %s", def_len, f->len);
+	printf("%s\n", buf);
+
+	return 0;
+}
+static int gen_field_func(const char *dev_name, const char *prop_name,
+    const struct field_int *f) {
 	char buf[128];
 	char def[64];
 
@@ -65,11 +96,10 @@ static int gen_field_func(const char *dev_name,
 	}
 
 	if (!strcmp(f->name, "")) {
-		sprintf(def, "#define CONF_%s_%s()",
-			dev_name, prop_name);
-	} else {
-		sprintf(def, "#define CONF_%s_%s_%s()",
-			dev_name, prop_name, f->name);
+		sprintf(def, "#define CONF_%s_%s()", dev_name, prop_name);
+	}
+	else {
+		sprintf(def, "#define CONF_%s_%s_%s()", dev_name, prop_name, f->name);
 	}
 	sprintf(buf, "%-50s %s", def, f->val);
 	printf("%s\n", buf);
@@ -77,8 +107,8 @@ static int gen_field_func(const char *dev_name,
 	return 0;
 }
 
-static int gen_field_pin(const char *dev_name,
-		const char *prop_name, const struct field_pin *f) {
+static int gen_field_pin(const char *dev_name, const char *prop_name,
+    const struct field_pin *f) {
 	char buf[128];
 	char def[64];
 
@@ -86,25 +116,23 @@ static int gen_field_pin(const char *dev_name,
 		return -1;
 	}
 
-	sprintf(def, "#define CONF_%s_%s_%s_PORT",
-		dev_name, prop_name, f->name);
+	sprintf(def, "#define CONF_%s_%s_%s_PORT", dev_name, prop_name, f->name);
 	sprintf(buf, "%-50s %s", def, f->port);
 	printf("%s\n", buf);
 
-	sprintf(def, "#define CONF_%s_%s_%s_NR",
-		dev_name, prop_name, f->name);
+	sprintf(def, "#define CONF_%s_%s_%s_NR", dev_name, prop_name, f->name);
 	sprintf(buf, "%-50s %s", def, f->n);
 	printf("%s\n", buf);
 
-	sprintf(def, "#define CONF_%s_%s_%s_AF",
-		dev_name, prop_name, f->name);
+	sprintf(def, "#define CONF_%s_%s_%s_AF", dev_name, prop_name, f->name);
 	sprintf(buf, "%-50s %s", def, f->af);
 	printf("%s\n", buf);
 
 	return 0;
 }
 
-static int gen_field_gpio_out(const char *dev_name, const char *port, const char *pin) {
+static int gen_field_gpio_out(const char *dev_name, const char *port,
+    const char *pin, const char *level) {
 	char buf[128];
 	char def[64];
 
@@ -115,6 +143,42 @@ static int gen_field_gpio_out(const char *dev_name, const char *port, const char
 	sprintf(def, "#define CONF_%s_GPIO_PIN", dev_name);
 	sprintf(buf, "%-50s %s", def, pin);
 	printf("%s\n", buf);
+
+	sprintf(def, "#define CONF_%s_GPIO_LEVEL", dev_name);
+	sprintf(buf, "%-50s %s", def, level);
+	printf("%s\n", buf);
+
+	return 0;
+}
+
+static int gen_device_conf(const struct device_conf *dev) {
+	int j;
+
+	gen_dev_enabled(dev->name);
+
+	for (j = 0; j < ARRAY_SIZE(dev->regs); j++) {
+		if (gen_field_reg_map(dev->name, "REGION", &dev->regs[j]) != 0) {
+			break;
+		}
+	}
+
+	for (j = 0; j < ARRAY_SIZE(dev->irqs); j++) {
+		if (gen_field_int(dev->name, "IRQ", &dev->irqs[j]) != 0) {
+			break;
+		}
+	}
+
+	for (j = 0; j < ARRAY_SIZE(dev->pins); j++) {
+		if (gen_field_pin(dev->name, "PIN", &dev->pins[j]) != 0) {
+			break;
+		}
+	}
+
+	for (j = 0; j < ARRAY_SIZE(dev->clocks); j++) {
+		if (gen_field_func(dev->name, "CLK_ENABLE", &dev->clocks[j]) != 0) {
+			break;
+		}
+	}
 
 	return 0;
 }
@@ -131,153 +195,156 @@ int main() {
 	const struct pwm_conf *pwm;
 	struct conf_item *led_conf = &board_config[LED_IDX];
 	const struct led_conf *led;
+	struct conf_item *gpio_conf = &board_config[GPIO_IDX];
+	const struct gpio_conf *gpio;
+	struct conf_item *fpioa_conf = &board_config[FPIOA_IDX];
+	const struct fpioa_conf *fpioa;
+	struct conf_item *clk_conf = &board_config[CLK_IDX];
+	const struct clk_conf *clk;
 
 	config();
 
 	printf("#ifndef BOARD_CONFIG_H_\n");
 	printf("#define BOARD_CONFIG_H_\n\n");
 
+	/* CLK */
+	for (i = 0; i < clk_conf->array_size; i++) {
+		clk = &((const struct clk_conf *)clk_conf->ptr)[i];
+
+		if (clk->status != ENABLED) {
+			continue;
+		}
+
+		gen_device_conf(&clk->dev);
+
+		gen_field_int(clk->dev.name, "TYPE", &clk->type);
+
+		printf("\n");
+	}
+
+	/* GPIO */
+	for (i = 0; i < gpio_conf->array_size; i++) {
+		gpio = &((const struct gpio_conf *)gpio_conf->ptr)[i];
+
+		if (gpio->status != ENABLED) {
+			continue;
+		}
+
+		gen_device_conf(&gpio->dev);
+
+		gen_prop_ival(gpio->dev.name, "NUM", gpio->port_num);
+		gen_prop_ival(gpio->dev.name, "WIDTH", gpio->port_width);
+
+		printf("\n");
+	}
+
+	/* FPIOA */
+	for (i = 0; i < fpioa_conf->array_size; i++) {
+		fpioa = &((const struct fpioa_conf *)fpioa_conf->ptr)[i];
+
+		if (fpioa->status != ENABLED) {
+			continue;
+		}
+
+		gen_device_conf(&fpioa->dev);
+
+		gen_prop_ival(fpioa->dev.name, "NUM", fpioa->port_num);
+		gen_prop_ival(fpioa->dev.name, "WIDTH", fpioa->port_width);
+
+		printf("\n");
+	}
+
 	/* UART */
 	for (i = 0; i < uart_conf->array_size; i++) {
-		uart = &((const struct uart_conf *) uart_conf->ptr)[i];
+		uart = &((const struct uart_conf *)uart_conf->ptr)[i];
 
 		if (uart->status != ENABLED) {
 			continue;
 		}
 
-		gen_dev_enabled(uart->name);
-
-		for (j = 0; j < ARRAY_SIZE(uart->dev.irqs); j++) {
-			if (gen_field_int(uart->name,
-					"IRQ", &uart->dev.irqs[j]) != 0) {
-				break;
-			}
-		}
-
-		for (j = 0; j < ARRAY_SIZE(uart->dev.pins); j++) {
-			if (gen_field_pin(uart->name,
-					"PIN", &uart->dev.pins[j]) != 0) {
-				break;
-			}
-		}
-
-		for (j = 0; j < ARRAY_SIZE(uart->dev.clocks); j++) {
-			if (gen_field_func(uart->name,
-					"CLK_ENABLE", &uart->dev.clocks[j]) != 0) {
-				break;
-			}
-		}
+		gen_device_conf(&uart->dev);
 
 		printf("\n");
 	}
 
 	/* SPI */
 	for (i = 0; i < spi_conf->array_size; i++) {
-		spi = &((const struct spi_conf *) spi_conf->ptr)[i];
+		spi = &((const struct spi_conf *)spi_conf->ptr)[i];
 
 		if (spi->status != ENABLED) {
 			continue;
 		}
 
-		gen_dev_enabled(spi->name);
+		gen_device_conf(&spi->dev);
 
-		gen_prop_ival(spi->name, "BITS_PER_WORD", spi->bits_per_word);
-		gen_prop_ival(spi->name, "CLK_DIV", spi->clk_div);
-
-		for (j = 0; j < ARRAY_SIZE(spi->dev.irqs); j++) {
-			if (gen_field_int(spi->name,
-					"IRQ", &spi->dev.irqs[j]) != 0) {
-				break;
-			}
-		}
-
-		for (j = 0; j < ARRAY_SIZE(spi->dev.pins); j++) {
-			if (gen_field_pin(spi->name,
-					"PIN", &spi->dev.pins[j]) != 0) {
-				break;
-			}
-		}
-
-		for (j = 0; j < ARRAY_SIZE(spi->dev.clocks); j++) {
-			if (gen_field_func(spi->name,
-					"CLK_ENABLE", &spi->dev.clocks[j]) != 0) {
-				break;
-			}
-		}
+		gen_prop_ival(spi->dev.name, "BITS_PER_WORD", spi->bits_per_word);
+		gen_prop_ival(spi->dev.name, "CLK_DIV", spi->clk_div);
 
 		printf("\n");
 	}
 
 	/* I2C */
 	for (i = 0; i < i2c_conf->array_size; i++) {
-		i2c = &((const struct i2c_conf *) i2c_conf->ptr)[i];
+		i2c = &((const struct i2c_conf *)i2c_conf->ptr)[i];
 
 		if (i2c->status != ENABLED) {
 			continue;
 		}
 
-		gen_dev_enabled(i2c->name);
-
-		for (j = 0; j < ARRAY_SIZE(i2c->dev.irqs); j++) {
-			if (gen_field_int(i2c->name,
-					"", &i2c->dev.irqs[j]) != 0) {
-				break;
-			}
-		}
-
-		for (j = 0; j < ARRAY_SIZE(i2c->dev.pins); j++) {
-			if (gen_field_pin(i2c->name,
-					"PIN", &i2c->dev.pins[j]) != 0) {
-				break;
-			}
-		}
-
-		for (j = 0; j < ARRAY_SIZE(i2c->dev.clocks); j++) {
-			if (gen_field_func(i2c->name,
-					"CLK_ENABLE", &i2c->dev.clocks[j]) != 0) {
-				break;
-			}
-		}
+		gen_device_conf(&i2c->dev);
 
 		printf("\n");
 	}
 
 	/* PWM */
 	for (i = 0; i < pwm_conf->array_size; i++) {
-		pwm = &((const struct pwm_conf *) pwm_conf->ptr)[i];
+		pwm = &((const struct pwm_conf *)pwm_conf->ptr)[i];
 
-		gen_dev_enabled(pwm->name);
+		gen_device_conf(&pwm->dev);
+
 		gen_field_func(pwm->name, "CHANNEL", &pwm->channel);
 		gen_field_func(pwm->name, "TIM", &pwm->instance);
 		gen_field_int(pwm->name, "SERVO_POS", &pwm->servo_low);
 		gen_field_int(pwm->name, "SERVO_POS", &pwm->servo_high);
-
-		for (j = 0; j < ARRAY_SIZE(pwm->dev.pins); j++) {
-			if (gen_field_pin(pwm->name,
-					"PIN", &pwm->dev.pins[j]) != 0) {
-				break;
-			}
-		}
-
-		for (j = 0; j < ARRAY_SIZE(pwm->dev.clocks); j++) {
-			if (gen_field_func(pwm->name,
-					"CLK_ENABLE", &pwm->dev.clocks[j]) != 0) {
-				break;
-			}
-		}
 
 		printf("\n");
 	}
 
 	/* LED */
 	for (i = 0; i < led_conf->array_size; i++) {
-		led = &((const struct led_conf *) led_conf->ptr)[i];
+		led = &((const struct led_conf *)led_conf->ptr)[i];
+
+		if (led->status != ENABLED) {
+			continue;
+		}
 
 		gen_dev_enabled(led->name);
-		gen_field_gpio_out(led->name, led->port.val, led->pin.val);
+		gen_field_gpio_out(led->name, led->port.val, led->pin.val,
+		    led->level.val);
 
 		printf("\n");
 	}
+
+	/* LED info for leddrv library */
+	int led_quantity = 0;
+
+	printf("#define CONF_LED_LIST");
+	for (i = 0; i < led_conf->array_size; i++) {
+		led = &((const struct led_conf *)led_conf->ptr)[i];
+
+		if (led->status != ENABLED) {
+			continue;
+		}
+
+		led_quantity += 1;
+
+		printf("%s", (i == 0) ? " " : ", ");
+		printf("%s", led->name);
+	}
+	printf("\n");
+
+	printf("#define CONF_LED_QUANTITY %i\n", led_quantity);
+	printf("\n");
 
 	printf("#endif /* BOARD_CONFIG_H_ */\n");
 

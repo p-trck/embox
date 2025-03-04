@@ -6,6 +6,7 @@ struct uart_conf uarts[] = {
 		.status = DISABLED,
 		.name = "USART1",
 		.dev = {
+			.name = "USART1",
 			.irqs = {
 				VAL("", 37),
 			},
@@ -25,6 +26,7 @@ struct uart_conf uarts[] = {
 		.status = DISABLED,
 		.name = "USART2",
 		.dev = {
+			.name = "USART2",
 			.irqs = {
 				VAL("", 38),
 			},
@@ -44,6 +46,7 @@ struct uart_conf uarts[] = {
 		.status = ENABLED,
 		.name = "USART6",
 		.dev = {
+			.name = "USART6",
 			.irqs = {
 				VAL("", 71),
 			},
@@ -61,5 +64,21 @@ struct uart_conf uarts[] = {
 	},
 };
 
-EXPORT_CONFIG(UART(uarts))
+struct led_conf leds[] = {
+	[0] = {
+		.status = ENABLED,
+		.name = "LD1",
+		.port = VAL("", GPIO_PORT_J),
+		.pin = VAL("", 13),
+		.level = VAL("", GPIO_PIN_HIGH),
+	},
+	[1] = {
+		.status = ENABLED,
+		.name = "LD2",
+		.port = VAL("", GPIO_PORT_J),
+		.pin = VAL("", 5),
+		.level = VAL("", GPIO_PIN_HIGH),
+	},
+};
 
+EXPORT_CONFIG(UART(uarts), LED(leds))

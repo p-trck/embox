@@ -18,8 +18,9 @@
 #endif
 
 struct stm32_spi {
+	int (*hw_init)(void);
 	SPI_HandleTypeDef handle;
-	GPIO_TypeDef *nss_port;
+	unsigned short nss_port;
 	uint32_t nss_pin;
 	uint16_t clk_div;
 	uint16_t bits_per_word;

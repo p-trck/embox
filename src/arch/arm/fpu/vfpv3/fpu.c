@@ -8,44 +8,35 @@
 #include <stdint.h>
 #include <string.h>
 
-#include <util/log.h>
-#include <util/math.h>
 #include <arm/fpu.h>
-
 #include <embox/unit.h>
 #include <framework/mod/options.h>
+#include <util/log.h>
+#include <util/math.h>
 
-EMBOX_UNIT_INIT(vfp_init);
+EMBOX_UNIT_INIT(vfp_print_info);
 
-static int vfp_init(void) {
+static int vfp_print_info(void) {
 	uint32_t ctrl;
 	uint32_t sid;
 
-	log_boot_start();
-
 	/* Enable VFP extensions */
-	asm volatile("VMRS %0, FPEXC" : "=r"(ctrl));
-	asm volatile("VMSR FPEXC, %0" : : "r"(ctrl | VFP_FPEXC_EN));
+	__asm__ __volatile__("VMRS %0, FPEXC" : "=r"(ctrl));
+	__asm__ __volatile__("VMSR FPEXC, %0" : : "r"(ctrl | VFP_FPEXC_EN));
 
 	/* Print VFP info */
-	asm volatile("VMRS %0, FPSID" : "=r"(sid));
+	__asm__ __volatile__("VMRS %0, FPSID" : "=r"(sid));
 
-	log_boot("VPF info:\n"
-	         "\t\t\t %s\n"
-	         "\t\t\t Implementer =        0x%02x (%s)\n"
-	         "\t\t\t Subarch:             VFPv%d\n"
-	         "\t\t\t Part number =        0x%02x\n"
-	         "\t\t\t Variant     =        0x%02x\n"
-	         "\t\t\t Revision    =        0x%02x",
-	    (sid >> 23) & 1 ? "Software FP emulation" : "Hardware FP support",
-	    sid >> 24, ((sid >> 24) == 0x41) ? "ARM" : "Unknown",
-	    ((sid >> 16) & 0x7F) + 1, (sid >> 8) & 0xFF, (sid >> 4) & 0xF,
-	    sid & 0xF);
-
-	log_boot_stop();
+	log_info("%s",
+	    ((sid >> 23) & 0x1) ? "software FP emulation" : "hardware FP support");
+	log_info("implementer = %s", ((sid >> 24) == 0x41) ? "ARM" : "Unknown");
+	log_info("subarch     = VFPv%d", ((sid >> 16) & 0x7F) + 1);
+	log_info("part number = 0x%02x", (sid >> 8) & 0xFF);
+	log_info("variant     = 0x%02x", (sid >> 4) & 0xF);
+	log_info("revision    = 0x%02x", sid & 0xF);
 
 	/* Return to previos state */
-	asm volatile("VMSR FPEXC, %0" : : "r"(ctrl));
+	__asm__ __volatile__("VMSR FPEXC, %0" : : "r"(ctrl));
 
 	return 0;
 }

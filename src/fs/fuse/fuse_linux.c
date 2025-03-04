@@ -1,7 +1,7 @@
 /**
  * @file
  *
- * @data 23.11.2015
+ * @date 23.11.2015
  * @author: Anton Bondarev
  */
 #include <stddef.h>
@@ -10,7 +10,7 @@
 #include <assert.h>
 #include <unistd.h>
 
-#include <util/array.h>
+#include <lib/libds/array.h>
 
 #include <fs/dvfs.h>
 #include <kernel/task.h>

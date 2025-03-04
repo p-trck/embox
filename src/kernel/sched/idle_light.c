@@ -5,20 +5,19 @@
  * @author  Vita Loginova
  * @date    08.12.2014
  */
-
-#include <hal/arch.h>
+#include <hal/cpu_idle.h>
 #include <kernel/lthread/lthread.h>
+#include <kernel/sched.h>
 
 static struct lthread idle;
 
 static int idle_run(struct lthread *self) {
-	arch_idle();
+	arch_cpu_idle();
 	lthread_launch(self);
 	return 0;
 }
 
 int idle_thread_create(void) {
-
 	lthread_init(&idle, idle_run);
 
 	schedee_priority_set(&idle.schedee, SCHED_PRIORITY_MIN);

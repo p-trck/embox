@@ -1,4 +1,3 @@
-
 package embox.compat.posix.util
 
 module All {
@@ -14,11 +13,10 @@ module All {
 }
 
 static module getopt {
-	option number use_getopt=1
-
 	@IncludeExport(path="util")
 	source "getopt.h"
 	source "getopt.c"
+	source "getopt_init.c"
 	source "getopt_long.c"
 
 	@NoRuntime depends embox.compat.libc.str
@@ -45,7 +43,7 @@ static module times {
 }
 
 static module sleep {
-	option number log_level=0
+	option string log_level="LOG_NONE"
 
 	source "sleep.c"
 
@@ -54,7 +52,7 @@ static module sleep {
 }
 
 static module nanosleep {
-	option number log_level=0
+	option string log_level="LOG_NONE"
 
 	source "nanosleep.c"
 

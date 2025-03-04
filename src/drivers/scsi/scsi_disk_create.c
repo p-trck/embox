@@ -1,7 +1,7 @@
 /**
  * @file
  *
- * @data 10.11.15
+ * @date 10.11.15
  * @author: Anton Bondarev
  */
 #include <util/log.h>
@@ -17,7 +17,7 @@
 #include <mem/misc/pool.h>
 #include <kernel/thread.h>
 
-#include <util/indexator.h>
+#include <lib/libds/indexator.h>
 
 INDEX_DEF(scsi_disk_idx, 0, 26);
 

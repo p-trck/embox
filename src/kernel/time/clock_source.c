@@ -12,7 +12,7 @@
 #include <string.h>
 #include <errno.h>
 
-#include <util/dlist.h>
+#include <lib/libds/dlist.h>
 #include <util/math.h>
 #include <kernel/time/clock_source.h>
 #include <kernel/time/time.h>
@@ -75,7 +75,12 @@ struct timespec clock_source_read(struct clock_source *cs) {
 
 	cd = cs->counter_device;
 	if (cd) {
-		ns += ((uint64_t) cd->read(cs) * NSEC_PER_SEC) / cd->cycle_hz;
+		if (cd->cycle_hz >= NSEC_PER_SEC) {
+			ns += ((uint64_t) cd->read(cs)) / ((uint64_t) cd->cycle_hz / NSEC_PER_SEC);
+		}
+		else {
+			ns += ((uint64_t) cd->read(cs)) * ((uint64_t) NSEC_PER_SEC / cd->cycle_hz);
+		}
 	}
 
 	ts = ns_to_timespec(ns);

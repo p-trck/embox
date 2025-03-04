@@ -1,7 +1,7 @@
 package embox.driver.serial
 
 module sifive_uart extends embox.driver.serial.diag {
-	option number log_level = 1
+	option string log_level="LOG_ERR"
 
 	option number base_addr
 	option number irq_num
@@ -11,7 +11,6 @@ module sifive_uart extends embox.driver.serial.diag {
 
 	source "sifive_uart.c"
 
-	depends embox.driver.char_dev_api
 	depends embox.driver.serial.core
 	//depends embox.driver.serial.diag
 }

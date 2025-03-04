@@ -6,6 +6,7 @@ struct uart_conf uarts[] = {
  		.status = DISABLED,
 		.name = "USART1",
 		.dev = {
+			.name = "USART1",
 			.irqs = {
 				VAL("", 37),
 			},
@@ -25,6 +26,7 @@ struct uart_conf uarts[] = {
 		.status = ENABLED,
 		.name = "USART2",
 		.dev = {
+			.name = "USART2",
 			.irqs = {
 				VAL("", 38),
 			},
@@ -44,6 +46,7 @@ struct uart_conf uarts[] = {
 		.status = DISABLED,
 		.name = "USART6",
 		.dev = {
+			.name = "USART6",
 			.irqs = {
 				VAL("", 71),
 			},
@@ -66,6 +69,7 @@ struct led_conf leds[] = {
 		.name = "LED1",
 		.port = VAL("", GPIO_PORT_A),
 		.pin = VAL("", 5),
+		.level = VAL("", GPIO_PIN_HIGH),
 	},
 };
 
@@ -74,11 +78,12 @@ struct spi_conf spis[] = {
 		.status = ENABLED,
 		.name = "SPI1",
 		.dev = {
+			.name = "SPI1",
 			.pins = {
-				PIN("SCK",  PA, PIN_5, AF5),
-				PIN("MISO", PA, PIN_6, AF5),
-				PIN("MOSI", PA, PIN_7, AF5),
-				PIN("CS",   PD, PIN_14, NOAF),
+				PIN("SCK",  GPIO_PORT_A, PIN_5, AF5),
+				PIN("MISO", GPIO_PORT_A, PIN_6, AF5),
+				PIN("MOSI", GPIO_PORT_A, PIN_7, AF5),
+				PIN("CS",   GPIO_PORT_D, PIN_14, NOAF),
 			},
 			.clocks = {
 				VAL("SCK",  CLK_GPIOA),

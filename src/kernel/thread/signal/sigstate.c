@@ -15,7 +15,7 @@
 
 #include <kernel/irq_lock.h>
 
-#include <util/bit.h>
+#include <lib/libds/bit.h>
 #include <util/math.h>
 
 struct sigstate *sigstate_init(struct sigstate *sigstate) {
@@ -31,6 +31,14 @@ int sigstate_send(struct sigstate *sigstate, int sig, const siginfo_t *info) {
 	int err = 0;
 
 	assert(sigstate);
+
+	if (sig == 0) {
+		/*
+		 if sig is zero, error checking shall be performed
+		 but no signal shall actually be sent.
+		 */
+		return 0;
+	}
 
 	if (!check_range(sig, 1, _SIG_TOTAL))
 		return -EINVAL;

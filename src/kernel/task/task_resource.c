@@ -12,7 +12,7 @@
 #include <kernel/task.h>
 #include <kernel/task/resource.h>
 
-#include <util/array.h>
+#include <lib/libds/array.h>
 #include <util/binalign.h>
 
 #include <embox/unit.h>
@@ -29,6 +29,10 @@ void task_resource_init(const struct task *task) {
 		assert(binalign_check_bound(
 				*res->resource_offset, sizeof(void *)));
 		if (res->init != NULL) {
+			/**
+			 * For every task, task structure itself occupies the memory
+			 * before the resources and immediately follows the resource
+			 */
 			res->init(task, (void *) task->resources + *res->resource_offset);
 		}
 	}
