@@ -19,6 +19,8 @@
 #include <fs/file_format.h>
 #include <util/math.h>
 #include <framework/mod/options.h>
+#include <math.h>
+#include <float.h>
 
 #define USE_LOCAL_BUFFER OPTION_GET(BOOLEAN, use_local_buffer)
 
@@ -62,6 +64,26 @@ static void write_wave_addr(uint32_t addr, uint8_t *buf, int len) {
 
 	/* Since we already have audio in memory just prepend it with header */
 	memcpy((void *) addr, &hdr, sizeof(hdr));
+}
+
+
+#define MAX_AMPLITUDE 32768.0   // 16비트 오디오의 최대 진폭
+
+// RMS 계산 함수
+double calculate_rms(const int16_t *buffer, size_t size) {
+    double sum = 0.0;
+    for (size_t i = 0; i < size; i++) {
+        sum += buffer[i] * buffer[i];
+    }
+    return sqrt(sum / size);
+}
+
+double convert_to_dbfs(double rms, double max_amplitude) {
+    double dbfs = (rms > 0) ? 20.0 * log10(rms / max_amplitude) : -INFINITY;
+	if (dbfs > 0) {
+		dbfs = 0;
+	}
+	return dbfs;
 }
 
 #define AUDIO_ADDR_UNINITIALIZED ((uint32_t) -1)
@@ -120,6 +142,8 @@ static int record_callback(const void *inputBuffer, void *outputBuffer,
 		void *userData) {
 	int i;
 	uint16_t *in_data16 = (uint16_t *)inputBuffer;
+	double rms, dbfs;
+	const double max_amplitude = 32768.0;  // 16비트 오디오의 최대 진폭
 
 	assert(in_data16 && in_buf);
 
@@ -131,7 +155,11 @@ static int record_callback(const void *inputBuffer, void *outputBuffer,
 		cur_ptr += chan_n;
 	}
 
-	printf("|");
+	// RMS 및 dBFS 계산
+	rms = calculate_rms((const int16_t *)in_data16, (size_t)(framesPerBuffer * chan_n));
+	dbfs = convert_to_dbfs(rms, max_amplitude);
+
+	printf("dBFS: %d.%02d\n", (int)dbfs, abs((int)(dbfs*100))%100);
 	if (cur_ptr >= AUDIO_BUFFER_SIZE) {
 		printf("\n");
 		return paComplete;
