@@ -76,7 +76,7 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e) {
 
 static void print_available_conf_ports(void) {
 	pjsua_conf_port_id id[PJ_MAX_PORTS];
-	unsigned port_cnt;
+	unsigned port_cnt = PJ_MAX_PORTS;
 	pj_status_t status;
 	int i;
 
