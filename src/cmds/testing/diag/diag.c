@@ -115,11 +115,8 @@ int system_reset(void) {
     /* 모든 인터럽트 비활성화 */
     ipl_t ipl = ipl_save();
     
-    /* 캐시 및 버퍼 플러시 */
-    arch_idle();
-    
     /* CPU 리셋 */
-    arch_shutdown(ARCH_SHUTDOWN_MODE_REBOOT);
+    platform_shutdown(SHUTDOWN_MODE_REBOOT);
     
     /* 리셋이 실패한 경우 인터럽트 복원 */
     ipl_restore(ipl);
