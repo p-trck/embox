@@ -1,9 +1,10 @@
 
 PKG_NAME := pjproject
 PKG_VER  := 6470fb9e4bd9baa14d50f754dc7f945e7a76c828
-
+#PKG_VER  := 2.15.1
 PKG_SOURCES := https://github.com/pjsip/pjproject/archive/$(PKG_VER).zip
 PKG_MD5     := ec8e45c13d6b8a578612dabf98382141
+#PKG_MD5     := 366507f2e5fb3a3bf8baf41ccbbdd667
 
 include $(EXTBLD_LIB)
 

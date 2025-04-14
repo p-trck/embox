@@ -128,7 +128,7 @@ static void init_pjsua(void) {
 	cfg.cb.on_call_state = &on_call_state;
 
 	pjsua_logging_config_default(&log_cfg);
-	log_cfg.console_level = 1;
+	log_cfg.console_level = 4;
 
 	status = pjsua_init(&cfg, &log_cfg, NULL);
 	if (status != PJ_SUCCESS) {
@@ -241,8 +241,8 @@ int main(int argc, char *argv[]) {
 	}
 	#endif
 
-	extern int init_udp_terminal();
-	init_udp_terminal();
+	//extern int init_udp_terminal();
+	//init_udp_terminal();
 
 	/* Wait until user press "q" to quit. */
 	for (;;) {
