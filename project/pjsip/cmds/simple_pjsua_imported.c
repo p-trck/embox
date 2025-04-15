@@ -128,7 +128,7 @@ static void init_pjsua(void) {
 	cfg.cb.on_call_state = &on_call_state;
 
 	pjsua_logging_config_default(&log_cfg);
-	log_cfg.console_level = 4;
+	log_cfg.console_level = 1;
 
 	status = pjsua_init(&cfg, &log_cfg, NULL);
 	if (status != PJ_SUCCESS) {
@@ -136,33 +136,25 @@ static void init_pjsua(void) {
 	}
 }
 
-static void init_udp_transport(void) {
+static pjsua_transport_id init_udp_transport(void) {
 	pjsua_transport_config cfg;
 	pj_status_t status;
+	pjsua_transport_id transport_id = -1;
 
 	pjsua_transport_config_default(&cfg);
 	cfg.port = 5060;
-	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &cfg, NULL);
+	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &cfg, &transport_id);
 	if (status != PJ_SUCCESS) {
 		error_exit("Error creating transport", status);
 	}
+
+	return transport_id;
 }
 
-static void register_acc(pjsua_acc_id *acc_id) {
-	pjsua_acc_config cfg;
+static void register_acc(pjsua_acc_id *acc_id, pjsua_transport_id t_id) {
 	pj_status_t status;
 
-	pjsua_acc_config_default(&cfg);
-	cfg.id = pj_str("sip:" SIP_USER "@" SIP_DOMAIN);
-	//cfg.reg_uri = pj_str("sip:" SIP_DOMAIN);
-	//cfg.cred_count = 1;
-	//cfg.cred_info[0].realm = pj_str("*");
-	//cfg.cred_info[0].scheme = pj_str("digest");
-	//cfg.cred_info[0].username = pj_str(SIP_USER);
-	//cfg.cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
-	//cfg.cred_info[0].data = pj_str(SIP_PASSWD);
-
-	status = pjsua_acc_add(&cfg, PJ_TRUE, acc_id);
+	status = pjsua_acc_add_local(t_id, PJ_TRUE, acc_id);
 	if (status != PJ_SUCCESS) {
 		error_exit("Error adding account", status);
 	}
@@ -176,6 +168,7 @@ static void register_acc(pjsua_acc_id *acc_id) {
 int main(int argc, char *argv[]) {
 	pjsua_acc_id acc_id;
 	pj_status_t status;
+	pjsua_transport_id t_id;
 
 	MM_SET_HEAP(HEAP_EXTERN_MEM, NULL);
 
@@ -185,14 +178,14 @@ int main(int argc, char *argv[]) {
 	}
 
 	init_pjsua();
-	init_udp_transport();
+	t_id = init_udp_transport();
 
 	status = pjsua_start();
 	if (status != PJ_SUCCESS) {
 		error_exit("Error starting pjsua", status);
 	}
 
-	register_acc(&acc_id);
+	register_acc(&acc_id, t_id);
 
 	#ifdef LED_CONTROL
 	gpio_setup_mode(GPIO_PORT_J, LED1_PIN, GPIO_MODE_OUT);

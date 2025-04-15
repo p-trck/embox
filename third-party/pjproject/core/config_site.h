@@ -1,6 +1,6 @@
 #define PJ_LOG_USE_STACK_BUFFER        0
 
-#define PJ_LOG_MAX_LEVEL 4
+#define PJ_LOG_MAX_LEVEL 1
 
 #define PJ_POOL_DEBUG        0
 #define PJ_HAS_POOL_ALT_API  0
