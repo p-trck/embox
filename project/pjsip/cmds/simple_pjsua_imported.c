@@ -17,6 +17,8 @@
 
 #include <drivers/gpio/gpio.h>
 
+#include <pthread.h>
+
 #define THIS_FILE	"APP"
 
 #define PJ_MAX_PORTS 16
@@ -53,6 +55,37 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 	}
 }
 
+static int system_reset(void) {
+	printf("System reset...\n");
+
+	/* 모든 인터럽트 비활성화 */
+	ipl_t ipl = ipl_save();
+
+    /* CPU 리셋 */
+    platform_shutdown(SHUTDOWN_MODE_REBOOT);
+
+	/* 리셋이 실패한 경우 인터럽트 복원 */
+	ipl_restore(ipl);
+
+	/* 리셋이 실패하면 이 지점에 도달합니다 */
+	fprintf(stderr, "Fail to reset system\n");
+	return -1;
+}
+
+static int safe_system_reset(void) {
+	/* 열린 파일 핸들을 닫고 버퍼를 플러시 */
+	fflush(NULL);
+
+	/* 필요한 경우 파일 시스템 동기화 */
+	sync();
+
+	/* 잠시 대기 (선택적) */
+	sleep(0.2);
+
+	/* 실제 리셋 수행 */
+	return system_reset();
+}
+
 static void on_call_state(pjsua_call_id call_id, pjsip_event *e) {
 	pjsua_call_info ci;
 
@@ -72,6 +105,11 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e) {
 		gpio_set(GPIO_PORT_J, LED2_PIN, GPIO_PIN_HIGH);
 	}
 #endif
+	if(ci.state == PJSIP_INV_STATE_DISCONNECTED)
+	{
+		// reboot the system
+		safe_system_reset();
+	}
 }
 
 static void print_available_conf_ports(void) {
