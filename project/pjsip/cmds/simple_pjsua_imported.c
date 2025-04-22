@@ -108,8 +108,14 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e) {
 	if(ci.state == PJSIP_INV_STATE_DISCONNECTED)
 	{
 		// reboot the system
+		printf("Rebooting system...\n");
 		safe_system_reset();
 	}
+}
+
+void on_media_event(pjmedia_event *event)
+{
+	printf("on_media_event: %04x\n", event->type);
 }
 
 static void print_available_conf_ports(void) {
@@ -164,6 +170,7 @@ static void init_pjsua(void) {
 	cfg.cb.on_incoming_call = &on_incoming_call;
 	cfg.cb.on_call_media_state = &on_call_media_state;
 	cfg.cb.on_call_state = &on_call_state;
+	cfg.cb.on_media_event = &on_media_event;
 
 	pjsua_logging_config_default(&log_cfg);
 	log_cfg.console_level = 1;
