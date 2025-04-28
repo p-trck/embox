@@ -15,7 +15,7 @@
 
 #include <simple_pjsua_sip_account.inc>
 
-#include <drivers/gpio/gpio.h>
+#include <drivers/gpio.h>
 
 #include <pthread.h>
 
