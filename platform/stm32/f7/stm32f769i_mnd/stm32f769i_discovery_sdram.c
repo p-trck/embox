@@ -172,7 +172,7 @@ uint8_t BSP_SDRAM_Init(void)
 	// refresh rate = 64ms / 8192 = 7.81 us
 	// refresh count = (refresh rate x SDRAM clock frequency) - 20
 	// refresh count = 7.81 us x 108 MHz - 20 = 823
-  BSP_SDRAM_Initialization_sequence(823);
+  BSP_SDRAM_Initialization_sequence(1667);
   
   return sdramstatus;
 }
@@ -379,7 +379,7 @@ __weak void BSP_SDRAM_MspInit(SDRAM_HandleTypeDef  *hsdram, void *Params)
   /* Common GPIO configuration */
   gpio_init_structure.Mode      = GPIO_MODE_AF_PP;
   gpio_init_structure.Pull      = GPIO_PULLUP;
-  gpio_init_structure.Speed     = GPIO_SPEED_FAST;
+  gpio_init_structure.Speed     = GPIO_SPEED_HIGH;
   gpio_init_structure.Alternate = GPIO_AF12_FMC;
 
   /* GPIOC configuration */
