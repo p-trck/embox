@@ -138,17 +138,17 @@ uint8_t BSP_SDRAM_Init(void)
   Timing.LoadToActiveDelay    = 2;    // T_MRD  = 2 CLK
   Timing.ExitSelfRefreshDelay = 11;   // T_XSR  = 97ns 
   Timing.SelfRefreshTime      = 7;    // T_RAS  = 42 ~ 120000 ns
-  Timing.RowCycleDelay        = 10;   // T_RC   = 60 ns ~
-  Timing.WriteRecoveryTime    = 3;    // T_WR   = 1 clk + 6 ns
-  Timing.RPDelay              = 2;    // T_RP   = 18 ns
-  Timing.RCDDelay             = 2;    // T_RCD  = 18 ns
+  Timing.RowCycleDelay        = 8;   // T_RC   = 60 ns ~
+  Timing.WriteRecoveryTime    = 1;    // T_WR   = 1 clk + 6 ns
+  Timing.RPDelay              = 3;    // T_RP   = 18 ns
+  Timing.RCDDelay             = 3;    // T_RCD  = 18 ns
   
   sdramHandle.Init.SDBank             = FMC_SDRAM_BANK1;
   sdramHandle.Init.ColumnBitsNumber   = FMC_SDRAM_COLUMN_BITS_NUM_9;
   sdramHandle.Init.RowBitsNumber      = FMC_SDRAM_ROW_BITS_NUM_13;
   sdramHandle.Init.MemoryDataWidth    = SDRAM_MEMORY_WIDTH;
   sdramHandle.Init.InternalBankNumber = FMC_SDRAM_INTERN_BANKS_NUM_4;
-  sdramHandle.Init.CASLatency         = FMC_SDRAM_CAS_LATENCY_3;
+  sdramHandle.Init.CASLatency         = FMC_SDRAM_CAS_LATENCY_2;
   sdramHandle.Init.WriteProtection    = FMC_SDRAM_WRITE_PROTECTION_DISABLE;
   sdramHandle.Init.SDClockPeriod      = SDCLOCK_PERIOD;
   sdramHandle.Init.ReadBurst          = FMC_SDRAM_RBURST_ENABLE;
@@ -245,7 +245,7 @@ void BSP_SDRAM_Initialization_sequence(uint32_t RefreshCount)
   /* Step 5: Program the external memory mode register */
   tmpmrd = (uint32_t)SDRAM_MODEREG_BURST_LENGTH_2          |\
                      SDRAM_MODEREG_BURST_TYPE_SEQUENTIAL   |\
-                     SDRAM_MODEREG_CAS_LATENCY_3           |\
+                     SDRAM_MODEREG_CAS_LATENCY_2           |\
                      SDRAM_MODEREG_OPERATING_MODE_STANDARD |\
                      SDRAM_MODEREG_WRITEBURST_MODE_SINGLE;
   
