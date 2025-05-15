@@ -15,7 +15,9 @@
 
 #include <simple_pjsua_sip_account.inc>
 
-#include <drivers/gpio/gpio.h>
+#include <drivers/gpio.h>
+
+#include <pthread.h>
 
 #define THIS_FILE	"APP"
 
@@ -53,6 +55,37 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 	}
 }
 
+static int system_reset(void) {
+	printf("System reset...\n");
+
+	/* 모든 인터럽트 비활성화 */
+	ipl_t ipl = ipl_save();
+
+    /* CPU 리셋 */
+    platform_shutdown(SHUTDOWN_MODE_REBOOT);
+
+	/* 리셋이 실패한 경우 인터럽트 복원 */
+	ipl_restore(ipl);
+
+	/* 리셋이 실패하면 이 지점에 도달합니다 */
+	fprintf(stderr, "Fail to reset system\n");
+	return -1;
+}
+
+static int safe_system_reset(void) {
+	/* 열린 파일 핸들을 닫고 버퍼를 플러시 */
+	fflush(NULL);
+
+	/* 필요한 경우 파일 시스템 동기화 */
+	sync();
+
+	/* 잠시 대기 (선택적) */
+	sleep(0.2);
+
+	/* 실제 리셋 수행 */
+	return system_reset();
+}
+
 static void on_call_state(pjsua_call_id call_id, pjsip_event *e) {
 	pjsua_call_info ci;
 
@@ -72,6 +105,17 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e) {
 		gpio_set(GPIO_PORT_J, LED2_PIN, GPIO_PIN_HIGH);
 	}
 #endif
+	if(ci.state == PJSIP_INV_STATE_DISCONNECTED)
+	{
+		// reboot the system
+		printf("Rebooting system...\n");
+		safe_system_reset();
+	}
+}
+
+void on_media_event(pjmedia_event *event)
+{
+	printf("on_media_event: %04x\n", event->type);
 }
 
 static void print_available_conf_ports(void) {
@@ -126,6 +170,7 @@ static void init_pjsua(void) {
 	cfg.cb.on_incoming_call = &on_incoming_call;
 	cfg.cb.on_call_media_state = &on_call_media_state;
 	cfg.cb.on_call_state = &on_call_state;
+	cfg.cb.on_media_event = &on_media_event;
 
 	pjsua_logging_config_default(&log_cfg);
 	log_cfg.console_level = 1;
@@ -136,33 +181,25 @@ static void init_pjsua(void) {
 	}
 }
 
-static void init_udp_transport(void) {
+static pjsua_transport_id init_udp_transport(void) {
 	pjsua_transport_config cfg;
 	pj_status_t status;
+	pjsua_transport_id transport_id = -1;
 
 	pjsua_transport_config_default(&cfg);
 	cfg.port = 5060;
-	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &cfg, NULL);
+	status = pjsua_transport_create(PJSIP_TRANSPORT_UDP, &cfg, &transport_id);
 	if (status != PJ_SUCCESS) {
 		error_exit("Error creating transport", status);
 	}
+
+	return transport_id;
 }
 
-static void register_acc(pjsua_acc_id *acc_id) {
-	pjsua_acc_config cfg;
+static void register_acc(pjsua_acc_id *acc_id, pjsua_transport_id t_id) {
 	pj_status_t status;
 
-	pjsua_acc_config_default(&cfg);
-	cfg.id = pj_str("sip:" SIP_USER "@" SIP_DOMAIN);
-	//cfg.reg_uri = pj_str("sip:" SIP_DOMAIN);
-	//cfg.cred_count = 1;
-	//cfg.cred_info[0].realm = pj_str("*");
-	//cfg.cred_info[0].scheme = pj_str("digest");
-	//cfg.cred_info[0].username = pj_str(SIP_USER);
-	//cfg.cred_info[0].data_type = PJSIP_CRED_DATA_PLAIN_PASSWD;
-	//cfg.cred_info[0].data = pj_str(SIP_PASSWD);
-
-	status = pjsua_acc_add(&cfg, PJ_TRUE, acc_id);
+	status = pjsua_acc_add_local(t_id, PJ_TRUE, acc_id);
 	if (status != PJ_SUCCESS) {
 		error_exit("Error adding account", status);
 	}
@@ -176,6 +213,7 @@ static void register_acc(pjsua_acc_id *acc_id) {
 int main(int argc, char *argv[]) {
 	pjsua_acc_id acc_id;
 	pj_status_t status;
+	pjsua_transport_id t_id;
 
 	MM_SET_HEAP(HEAP_EXTERN_MEM, NULL);
 
@@ -185,14 +223,14 @@ int main(int argc, char *argv[]) {
 	}
 
 	init_pjsua();
-	init_udp_transport();
+	t_id = init_udp_transport();
 
 	status = pjsua_start();
 	if (status != PJ_SUCCESS) {
 		error_exit("Error starting pjsua", status);
 	}
 
-	register_acc(&acc_id);
+	register_acc(&acc_id, t_id);
 
 	#ifdef LED_CONTROL
 	gpio_setup_mode(GPIO_PORT_J, LED1_PIN, GPIO_MODE_OUT);
@@ -220,29 +258,36 @@ int main(int argc, char *argv[]) {
 	gpio_setup_mode(GPIO_PORT_A, PIN_MUTE, GPIO_MODE_OUT);
 	gpio_set(GPIO_PORT_A, PIN_MUTE, GPIO_PIN_LOW);
 
-	#if 0
+	#if 1
 	puts("PJSIP running..");
 	unsigned lv_rx, lv_tx, muted = 0;
 	for(;;) {
 		pjsua_conf_get_signal_level(0, &lv_tx, &lv_rx);
-		if(!muted && lv_tx > 30)
-		{
+		static unsigned long last_low_tx = 0;
+
+		if (!muted && lv_tx > 30) {
 			muted = 1;
 			pjsua_conf_adjust_rx_level(0, 0.);
-			puts("Mute");
+			//puts("Mute");
+		} else if (muted && lv_tx < 20) {
+			unsigned long current_time = clock();
+			if (last_low_tx == 0) {
+				last_low_tx = current_time;
+			} else if ((current_time - last_low_tx) >= CLOCKS_PER_SEC * 0.5) {
+				muted = 0;
+				pjsua_conf_adjust_rx_level(0, 1.);
+				//puts("Unmute");
+				last_low_tx = 0;
+			}
+		} else if (muted && lv_tx >= 20) {
+			last_low_tx = 0;
 		}
-		else if(muted && lv_tx < 30)
-		{
-			muted = 0;
-			pjsua_conf_adjust_rx_level(0, 1.);
-			puts("Unmute");
-		}
-		usleep(100000);
+		usleep(10000);
 	}
 	#endif
 
-	extern int init_udp_terminal();
-	init_udp_terminal();
+	//extern int init_udp_terminal();
+	//init_udp_terminal();
 
 	/* Wait until user press "q" to quit. */
 	for (;;) {

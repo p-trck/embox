@@ -9,7 +9,7 @@
 #include <errno.h>
 #include <stdbool.h>
 
-#include <drivers/gpio/gpio.h>
+#include <drivers/gpio.h>
 #include <embox/unit.h>
 #include <util/log.h>
 
@@ -82,6 +82,9 @@ void leddrv_get_states(bool states[LEDDRV_LED_N]) {
 
 	for (i = 0; i < LEDDRV_LED_N; i++) {
 		states[i] = !!gpio_get(leds[i].port, leds[i].pin);
+		if (leds[i].level[LED_ON] == GPIO_PIN_LOW) {
+			states[i] = !states[i];
+		}
 	}
 }
 

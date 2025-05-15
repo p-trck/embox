@@ -16,3 +16,13 @@ module simple_pjsua_imported {
 
 	@NoRuntime depends third_party.pjproject.libpj_all
 }
+
+@AutoCmd
+@Cmd(name="alloc", help="", man="")
+@Build(stage=2)
+module alloc_test {
+	source "alloc_test.c"
+
+	depends embox.compat.libc.stdio.printf
+	depends embox.compat.libc.str
+}
