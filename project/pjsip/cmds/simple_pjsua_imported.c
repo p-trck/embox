@@ -258,24 +258,31 @@ int main(int argc, char *argv[]) {
 	gpio_setup_mode(GPIO_PORT_A, PIN_MUTE, GPIO_MODE_OUT);
 	gpio_set(GPIO_PORT_A, PIN_MUTE, GPIO_PIN_LOW);
 
-	#if 0
+	#if 1
 	puts("PJSIP running..");
 	unsigned lv_rx, lv_tx, muted = 0;
 	for(;;) {
 		pjsua_conf_get_signal_level(0, &lv_tx, &lv_rx);
-		if(!muted && lv_tx > 30)
-		{
+		static unsigned long last_low_tx = 0;
+
+		if (!muted && lv_tx > 30) {
 			muted = 1;
 			pjsua_conf_adjust_rx_level(0, 0.);
-			puts("Mute");
+			//puts("Mute");
+		} else if (muted && lv_tx < 20) {
+			unsigned long current_time = clock();
+			if (last_low_tx == 0) {
+				last_low_tx = current_time;
+			} else if ((current_time - last_low_tx) >= CLOCKS_PER_SEC * 0.5) {
+				muted = 0;
+				pjsua_conf_adjust_rx_level(0, 1.);
+				//puts("Unmute");
+				last_low_tx = 0;
+			}
+		} else if (muted && lv_tx >= 20) {
+			last_low_tx = 0;
 		}
-		else if(muted && lv_tx < 30)
-		{
-			muted = 0;
-			pjsua_conf_adjust_rx_level(0, 1.);
-			puts("Unmute");
-		}
-		usleep(100000);
+		usleep(10000);
 	}
 	#endif
 
