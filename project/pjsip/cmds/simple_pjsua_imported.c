@@ -48,10 +48,10 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 
 	/* Automatically answer incoming calls with 200/OK */
 	{
-		heap_type_t prev_type;
-		MM_SET_HEAP(HEAP_RAM, &prev_type);
+		//heap_type_t prev_type;
+		//MM_SET_HEAP(HEAP_RAM, &prev_type);
 		pjsua_call_answer(call_id, 200, NULL, NULL);
-		MM_SET_HEAP(prev_type, NULL);
+		//MM_SET_HEAP(prev_type, NULL);
 	}
 }
 
@@ -258,6 +258,9 @@ int main(int argc, char *argv[]) {
 	gpio_setup_mode(GPIO_PORT_A, PIN_MUTE, GPIO_MODE_OUT);
 	gpio_set(GPIO_PORT_A, PIN_MUTE, GPIO_PIN_LOW);
 
+	extern int init_udp_terminal();
+	init_udp_terminal();
+
 	#if 1
 	puts("PJSIP running..");
 	unsigned lv_rx, lv_tx, muted = 0;
@@ -282,12 +285,10 @@ int main(int argc, char *argv[]) {
 		} else if (muted && lv_tx >= 20) {
 			last_low_tx = 0;
 		}
+		//printf(">RX:%d\r\n", lv_rx);
 		usleep(10000);
 	}
 	#endif
-
-	//extern int init_udp_terminal();
-	//init_udp_terminal();
 
 	/* Wait until user press "q" to quit. */
 	for (;;) {
