@@ -36,6 +36,8 @@
 #define LED2_PIN        (1 << 5)
 #define PIN_MUTE		(1 << 10)
 
+uint8_t terminate_sip = 0;
+
 static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 				pjsip_rx_data *rdata) {
 	pjsua_call_info ci;
@@ -205,6 +207,43 @@ static void register_acc(pjsua_acc_id *acc_id, pjsua_transport_id t_id) {
 	}
 }
 
+
+static void *force_quit_sip(void *arg) 
+{
+	/* Wait until user press "q" to quit. */
+	for (;;) {
+		char option[10];
+
+		terminate_sip = 0;
+
+		puts("Press 'q' to quit");
+		if (fgets(option, sizeof(option), stdin) == NULL) {
+			puts("EOF while reading stdin, will quit now..");
+			break;
+		}
+
+		if (option[0] == 'q')
+		{
+			puts("Quitting...");
+			terminate_sip = 1;
+			break;
+		}
+	}
+
+	return NULL;
+}
+
+static int init_quit_sip()
+{
+	pthread_t thread_id;
+
+	if (pthread_create(&thread_id, NULL, force_quit_sip, NULL) != 0) {
+		perror("Failed to create UDP command listener thread");
+		return -1;
+	}
+
+	return 0;
+}
 /*
  * main()
  *
@@ -260,6 +299,7 @@ int main(int argc, char *argv[]) {
 
 	extern int init_udp_terminal();
 	init_udp_terminal();
+	init_quit_sip();
 
 	#if 1
 	puts("PJSIP running..");
@@ -287,28 +327,17 @@ int main(int argc, char *argv[]) {
 		}
 		//printf(">RX:%d\r\n", lv_rx);
 		usleep(10000);
+		if(terminate_sip)
+		{
+			break;
+		}
 	}
 	#endif
 
-	/* Wait until user press "q" to quit. */
-	for (;;) {
-		char option[10];
-
-		puts("Press 'h' to hangup all calls, 'q' to quit");
-		if (fgets(option, sizeof(option), stdin) == NULL) {
-			puts("EOF while reading stdin, will quit now..");
-			break;
-		}
-
-		if (option[0] == 'q')
-			break;
-
-		if (option[0] == 'h')
-			pjsua_call_hangup_all();
-	}
-
 	/* Destroy pjsua */
+	pjsua_call_hangup_all();
 	pjsua_destroy();
+
 	MM_SET_HEAP(HEAP_RAM, NULL);
 	#ifdef LED_CONTROL
 	gpio_set(GPIO_PORT_J, LED1_PIN, GPIO_PIN_LOW);
