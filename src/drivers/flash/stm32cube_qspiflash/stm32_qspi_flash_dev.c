@@ -62,7 +62,8 @@ static int qspi_flash_read(struct flash_dev *dev, uint32_t addr, void *data, siz
 		return -1;
 	}
 	/* read can be unaligned */
-	memcpy(data, (void *) QSPI_BASE + addr, len);
+	//memcpy(data, (void *) QSPI_BASE + addr, len);
+	BSP_QSPI_Read(data, addr, len);
 	return len;
 }
 
@@ -77,12 +78,12 @@ static inline int poll_flash_busy(int maxms) {
 static int qspi_flash_erase_block(struct flash_dev *dev, uint32_t block) {
 	int res;
 log_debug("Block %d", block);
-	BSP_QSPI_Init(); // exit memory mapped mode
-	if(poll_flash_busy(100) >= 100) {
-		log_error("Fail after BSP_QSPI_Init: flash chip busy > 100 ms");
-		BSP_QSPI_EnableMemoryMappedMode();
-		return QSPI_BUSY;
-	}
+//	BSP_QSPI_Init(); // exit memory mapped mode
+//	if(poll_flash_busy(100) >= 100) {
+//		log_error("Fail after BSP_QSPI_Init: flash chip busy > 100 ms");
+//		//BSP_QSPI_EnableMemoryMappedMode();
+//		return QSPI_BUSY;
+//	}
 
 #if defined USE_STM32L475E_IOT01
 	res = BSP_QSPI_Erase_Sector(block);
@@ -99,7 +100,7 @@ log_debug("Block %d", block);
 		res = QSPI_BUSY;
 	}
 
-	BSP_QSPI_EnableMemoryMappedMode();
+	//BSP_QSPI_EnableMemoryMappedMode();
 	//dcache_flush_all();	// or use dcache_flush(const void *p, size_t size);
 
 #if QSPI_ERASE_CHECK
@@ -125,20 +126,20 @@ log_debug("Addr %d, length %d", addr, len);
 		return -1;
 	}
 
-	BSP_QSPI_Init(); // exit memory mapped mode
-log_debug("BSP_QSPI_Init(): %d", clock()-t0);t0=clock();
-	if(poll_flash_busy(100) >= 100) {
-		log_error("Fail after BSP_QSPI_Init: flash chip busy > 100 ms");
-		BSP_QSPI_EnableMemoryMappedMode();
-		return QSPI_BUSY;
-	}
-log_debug("poll_flash_busy(): %d", clock()-t0);t0=clock();
+//	BSP_QSPI_Init(); // exit memory mapped mode
+//log_debug("BSP_QSPI_Init(): %d", clock()-t0);t0=clock();
+//	if(poll_flash_busy(100) >= 100) {
+//		log_error("Fail after BSP_QSPI_Init: flash chip busy > 100 ms");
+//		//BSP_QSPI_EnableMemoryMappedMode();
+//		return QSPI_BUSY;
+//	}
+//log_debug("poll_flash_busy(): %d", clock()-t0);t0=clock();
 
 	res = BSP_QSPI_Write((uint8_t*) data, addr, len);
 log_debug("BSP_QSPI_Write(): %d", clock()-t0);t0=clock();
 	if(res != QSPI_OK) {
 		log_error("QSPI write failed. addr=0x%x,len=0x%x", addr, len);
-		BSP_QSPI_EnableMemoryMappedMode();
+		//BSP_QSPI_EnableMemoryMappedMode();
 		return res;
 		}
 	if(poll_flash_busy(10) >= 10) {
@@ -147,8 +148,8 @@ log_debug("BSP_QSPI_Write(): %d", clock()-t0);t0=clock();
 	}
 log_debug("poll_flash_busy(): %d", clock()-t0);t0=clock();
 
-	BSP_QSPI_EnableMemoryMappedMode();
-log_debug("BSP_QSPI_EnableMemoryMappedMode(): %d", clock()-t0);
+	//BSP_QSPI_EnableMemoryMappedMode();
+//log_debug("BSP_QSPI_EnableMemoryMappedMode(): %d", clock()-t0);
 	//dcache_flush_all();	// or use dcache_flush(const void *p, size_t size);
 log_debug("Ok");
 	return len;

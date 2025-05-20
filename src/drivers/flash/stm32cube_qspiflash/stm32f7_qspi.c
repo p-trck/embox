@@ -23,7 +23,7 @@ EMBOX_UNIT_INIT(stm32f7_qspi_init);
 static int stm32f7_qspi_init(void) {
 	BSP_QSPI_Init();
 
-	BSP_QSPI_EnableMemoryMappedMode();
+	//BSP_QSPI_EnableMemoryMappedMode();
 
 	return 0;
 }
