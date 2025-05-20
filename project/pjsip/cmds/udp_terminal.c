@@ -122,6 +122,120 @@ int safe_system_reset(void) {
 	return system_reset();
 }
 
+#include <stdio.h>
+#include <string.h>
+#include <ctype.h>
+#include <stdlib.h>
+
+#define MAX_LINE 256
+#define CONFIG_FILE "/conf/network"
+
+// IP 주소 유효성 검사
+int validate_ip(const char *str) {
+    char temp[32];
+    char *ptr = temp;
+    int count = 0;
+
+    strncpy(temp, str, sizeof(temp) - 1);
+    temp[sizeof(temp) - 1] = '\0';
+
+    char *token = strtok(ptr, ".");
+    while (token && count < 4) {
+        char *endptr;
+        long val = strtol(token, &endptr, 10);
+        if (*endptr != '\0' || val < 0 || val > 255) {
+            return 0; // 잘못된 숫자 또는 범위 초과
+        }
+        token = strtok(NULL, ".");
+		count++;
+    }
+    return (count == 4 && strtok(NULL, ".") == NULL) ? 1 : 0;
+}
+
+// MAC 주소 유효성 검사
+int validate_mac(const char *str) {
+    int count = 0;
+    char temp[32];
+    char *ptr = temp;
+
+    strncpy(temp, str, sizeof(temp) - 1);
+    temp[sizeof(temp) - 1] = '\0';
+
+    char *token = strtok(ptr, ":");
+    while (token && count < 6) {
+        if (strlen(token) != 2) return 0;
+        for (int i = 0; i < 2; i++) {
+            if (!isxdigit((unsigned char)token[i])) return 0;
+        }
+        count++;
+        token = strtok(NULL, ":");
+    }
+    return (count == 6 && strtok(NULL, ":") == NULL) ? 1 : 0;
+}
+
+// 네트워크 설정 수정 함수
+int set_network_config(const char *option, const char *value) {
+    // 유효한 옵션인지 확인
+    if (strcmp(option, "address") != 0 &&
+        strcmp(option, "netmask") != 0 &&
+        strcmp(option, "gateway") != 0 &&
+        strcmp(option, "hwaddress") != 0) {
+        return -1;
+    }
+
+    // 값 형식 검증
+    if (strcmp(option, "hwaddress") == 0) {
+        if (!validate_mac(value)) return -1;
+    } else {
+        if (!validate_ip(value)) return -1;
+    }
+
+    // 파일 읽기
+    FILE *fp = fopen(CONFIG_FILE, "r");
+    if (!fp) return -1;
+
+    char lines[1024][MAX_LINE];
+    int line_count = 0;
+
+    // 파일을 라인 단위로 읽어 메모리에 저장
+    while (line_count < 1024 && fgets(lines[line_count], MAX_LINE, fp)) {
+        lines[line_count][strcspn(lines[line_count], "\n")] = '\0'; // 개행 문자 제거
+        line_count++;
+    }
+    fclose(fp);
+
+    // 파일 쓰기
+    fp = fopen(CONFIG_FILE, "w");
+    if (!fp) return -1;
+
+    // 라인을 순회하며 옵션에 해당하는 라인을 수정
+    int updated = 0;
+    for (int i = 0; i < line_count; i++) {
+        char *line = lines[i];
+        char *trimmed = line;
+
+        // 앞쪽 스페이스 또는 탭 제거
+        while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
+
+        // 옵션에 해당하는 라인인지 확인
+        if (strncmp(trimmed, option, strlen(option)) == 0 &&
+            (trimmed[strlen(option)] == ' ' || trimmed[strlen(option)] == '\t')) {
+            // 원본 라인의 앞쪽 공백(스페이스/탭)을 유지
+            fprintf(fp, "%.*s%s %s\n", (int)(trimmed - line), line, option, value);
+            updated = 1;
+        } else {
+            fprintf(fp, "%s\n", line);
+        }
+    }
+
+    fclose(fp);
+    if (!updated) {
+        return -1;
+    }
+
+	return 0;
+}
+
 int init_udp_socket() {
 	int broadcast_enable = 1;
 
@@ -217,6 +331,24 @@ void *udp_command_listener(void *arg) {
 			sendto(sock, VERSION, strlen(VERSION), 0,
 			    (struct sockaddr *)&client_addr, addr_len);
 			printf("Version:%s\n", VERSION);
+		}
+		else if (strncmp(buffer, "set ", 4) == 0) {
+			char *option = buffer + 4;
+			char *value = strchr(option, ' ');
+			if (value != NULL) {
+				*value = '\0';
+				value++;
+				if (set_network_config(option, value) == 0) {
+					const char *msg = "Network config modified\n";
+					sendto(sock, msg, strlen(msg), 0,
+					    (struct sockaddr *)&client_addr, addr_len);
+					printf("Modified: %s %s\n", option, value);
+				} else {
+					const char *error_msg = "Invalid option or value\n";
+					sendto(sock, error_msg, strlen(error_msg), 0,
+					    (struct sockaddr *)&client_addr, addr_len);
+				}
+			}
 		}
 		else {
 			const char *unknown_cmd = "Unknown command\n";
