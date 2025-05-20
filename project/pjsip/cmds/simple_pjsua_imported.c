@@ -235,6 +235,7 @@ static void *force_quit_sip(void *arg)
 
 static int init_quit_sip()
 {
+	return 0;
 	pthread_t thread_id;
 
 	if (pthread_create(&thread_id, NULL, force_quit_sip, NULL) != 0) {
