@@ -50,10 +50,10 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 
 	/* Automatically answer incoming calls with 200/OK */
 	{
-		//heap_type_t prev_type;
-		//MM_SET_HEAP(HEAP_RAM, &prev_type);
+		heap_type_t prev_type;
+		MM_SET_HEAP(HEAP_RAM, &prev_type);
 		pjsua_call_answer(call_id, 200, NULL, NULL);
-		//MM_SET_HEAP(prev_type, NULL);
+		MM_SET_HEAP(prev_type, NULL);
 	}
 }
 
