@@ -39,7 +39,7 @@
 #define QSPI_BLOCK_SIZE MX25L512_SUBSECTOR_SIZE
 #define QSPI_ERASE_TIME MX25L512_SUBSECTOR_ERASE_MAX_TIME
 
-#error Unsupported platform // not tested properly yet
+//#error Unsupported platform // not tested properly yet
 
 #else
 #error Unsupported platform
