@@ -18,6 +18,7 @@
 #include <drivers/gpio.h>
 
 #include <pthread.h>
+#include <signal.h>
 
 #define THIS_FILE	"APP"
 
@@ -253,6 +254,13 @@ static int init_quit_sip()
 
 	return 0;
 }
+
+static void handle_sigint(int sig) {
+    // 앱 종료를 알리는 플래그 설정
+    terminate_sip = 1;
+    printf("\nSIGINT received, stopping application...\n");
+}
+
 /*
  * main()
  *
@@ -262,6 +270,10 @@ int main(int argc, char *argv[]) {
 	pjsua_acc_id acc_id;
 	pj_status_t status;
 	pjsua_transport_id t_id;
+
+	/* Setup SIGINT handler */
+	terminate_sip = 0;
+	signal(SIGINT, handle_sigint);
 
 	MM_SET_HEAP(HEAP_EXTERN_MEM, NULL);
 
@@ -334,12 +346,12 @@ int main(int argc, char *argv[]) {
 		} else if (muted && lv_tx >= 20) {
 			last_low_tx = 0;
 		}
-		//printf(">RX:%d\r\n", lv_rx);
-		usleep(10000);
 		if(terminate_sip)
 		{
 			break;
 		}
+		//printf(">RX:%d\r\n", lv_rx);
+		usleep(10000);
 	}
 	#endif
 
