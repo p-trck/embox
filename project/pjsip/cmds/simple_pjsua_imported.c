@@ -37,6 +37,7 @@
 #define PIN_MUTE		(1 << 10)
 
 uint8_t terminate_sip = 0;
+static uint8_t call_state = 0;
 
 static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 				pjsip_rx_data *rdata) {
@@ -54,6 +55,7 @@ static void on_incoming_call(pjsua_acc_id acc_id, pjsua_call_id call_id,
 		MM_SET_HEAP(HEAP_RAM, &prev_type);
 		pjsua_call_answer(call_id, 200, NULL, NULL);
 		MM_SET_HEAP(prev_type, NULL);
+		call_state = 1;
 	}
 }
 
@@ -112,12 +114,18 @@ static void on_call_state(pjsua_call_id call_id, pjsip_event *e) {
 		// reboot the system
 		printf("Rebooting system...\n");
 		safe_system_reset();
+		call_state = 0;
 	}
 }
 
 void on_media_event(pjmedia_event *event)
 {
 	printf("on_media_event: %04x\n", event->type);
+}
+
+uint8_t get_call_state(void)
+{
+	return call_state;
 }
 
 static void print_available_conf_ports(void) {

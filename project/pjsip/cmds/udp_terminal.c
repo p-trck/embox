@@ -312,41 +312,48 @@ void *udp_command_listener(void *arg) {
 		if (strcmp(buffer, "getip") == 0) {
 			char *ip;
 			ip = get_ip_address();
-			sendto(sock, ip, strlen(ip), 0, (struct sockaddr *)&client_addr,
-			    addr_len);
+			sendto(sock, ip, strlen(ip), 0, (struct sockaddr *)&client_addr, addr_len);
+			sendto(sock, "\n", 1, 0, (struct sockaddr *)&client_addr, addr_len);
 			printf("IP:%s\n", ip);
 		}
 		else if (strcmp(buffer, "reboot") == 0) {
-			const char *msg = "reboot system";
-			sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr,
-			    addr_len);
+			const char *msg = "reboot system\n";
+			sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
 			safe_system_reset();
 		}
 		else if (strcmp(buffer, "model") == 0) {
-			sendto(sock, MODEL_NAME, strlen(MODEL_NAME), 0,
-			    (struct sockaddr *)&client_addr, addr_len);
+			sendto(sock, MODEL_NAME, strlen(MODEL_NAME), 0, (struct sockaddr *)&client_addr, addr_len);
+			sendto(sock, "\n", 1, 0, (struct sockaddr *)&client_addr, addr_len);
 			printf("Model:%s\n", MODEL_NAME);
 		}
 		else if (strcmp(buffer, "version") == 0) {
-			sendto(sock, VERSION, strlen(VERSION), 0,
-			    (struct sockaddr *)&client_addr, addr_len);
+			sendto(sock, VERSION, strlen(VERSION), 0, (struct sockaddr *)&client_addr, addr_len);
+			sendto(sock, "\n", 1, 0, (struct sockaddr *)&client_addr, addr_len);
 			printf("Version:%s\n", VERSION);
 		}
 		else if (strncmp(buffer, "set ", 4) == 0) {
-			char *option = buffer + 4;
-			char *value = strchr(option, ' ');
-			if (value != NULL) {
-				*value = '\0';
-				value++;
-				if (set_network_config(option, value) == 0) {
-					const char *msg = "Network config modified\n";
-					sendto(sock, msg, strlen(msg), 0,
-					    (struct sockaddr *)&client_addr, addr_len);
-					printf("Modified: %s %s\n", option, value);
-				} else {
-					const char *error_msg = "Invalid option or value\n";
-					sendto(sock, error_msg, strlen(error_msg), 0,
-					    (struct sockaddr *)&client_addr, addr_len);
+			extern uint8_t get_call_state(void);
+			if(get_call_state() == 1) {
+				const char *msg = "ERR:Calling\n";
+				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+			}
+			else
+			{
+				char *option = buffer + 4;
+				char *value = strchr(option, ' ');
+				if (value != NULL) {
+					*value = '\0';
+					value++;
+					const char *msg = "OK:Check params\n";
+					sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+					if (set_network_config(option, value) == 0) {
+						const char *msg = "OK:Saved params\n";
+						sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+						printf("Modified: %s %s\n", option, value);
+					} else {
+						const char *error_msg = "ERR:Invalid option or value\n";
+						sendto(sock, error_msg, strlen(error_msg), 0, (struct sockaddr *)&client_addr, addr_len);
+					}
 				}
 			}
 		}
