@@ -331,7 +331,22 @@ void *udp_command_listener(void *arg) {
 			sendto(sock, "\n", 1, 0, (struct sockaddr *)&client_addr, addr_len);
 			printf("Version:%s\n", VERSION);
 		}
-		else if (strncmp(buffer, "set ", 4) == 0) {
+		else if (strncmp(buffer, "volume ", 7) == 0) {
+			int vol = atoi(buffer + 7);
+			if (vol >= 0 && vol <= 100) {
+				extern uint8_t BSP_AUDIO_OUT_SetVolume(uint8_t Volume);
+				const char *msg = "OK:Set audio volume\n";
+				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+
+				BSP_AUDIO_OUT_SetVolume(vol);
+
+				printf("Volume:%d\n", vol);
+			} else {
+				const char *error_msg = "ERR:Volume must be between 0-100\n";
+				sendto(sock, error_msg, strlen(error_msg), 0, (struct sockaddr *)&client_addr, addr_len);
+			}
+		}
+		else if (strncmp(buffer, "net ", 4) == 0) {
 			extern uint8_t get_call_state(void);
 			if(get_call_state() == 1) {
 				const char *msg = "ERR:Calling\n";
