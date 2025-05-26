@@ -91,7 +91,7 @@ static int record_callback(const void *inputBuffer, void *outputBuffer,
 
 // 5초동안 mic입력의 dbfs를 측정한다.
 
-int proc_testMIC()
+int proc_testMIC_()
 {
 	int err;
 	int devid;
@@ -166,4 +166,111 @@ err_terminate_pa:
 		printf("Portaudio error: could not terminate!\n");
 err_exit:
 	return 0;
+}
+
+#include <portaudio.h>
+#include <stdio.h>
+#include <math.h>
+#include <stdlib.h>
+
+typedef struct {
+    int currentLevel;
+    int peakLevel;
+    int sampleRate;
+} AudioLevelData;
+
+static int levelCallback(const void *inputBuffer, void *outputBuffer,
+                        unsigned long framesPerBuffer,
+                        const PaStreamCallbackTimeInfo* timeInfo,
+                        PaStreamCallbackFlags statusFlags,
+                        void *userData) {
+    
+    const int16_t *input = (const int16_t*)inputBuffer;
+    AudioLevelData *data = (AudioLevelData*)userData;
+    
+    float sum = 0.0f;
+    
+    for(unsigned long i = 0; i < framesPerBuffer; i++) {
+        // int16을 -1.0~1.0 범위로 정규화
+        float sample = (float)abs(input[i]) / 32768.0f;
+        sum += sample * sample;
+    }
+    
+    // RMS 계산 후 0-100 범위로 변환
+    float rmsLevel = sqrt(sum / framesPerBuffer);
+    data->currentLevel = (int)(rmsLevel * 1000);
+    
+    // 피크 레벨 업데이트 (0-1000 범위)
+    if(data->currentLevel > data->peakLevel) {
+        data->peakLevel = data->currentLevel;
+    }
+    
+    return paContinue;
+}
+
+#include <stdio.h>
+#include <limits.h>
+
+float safe_running_average(int value) {
+    static long long sum = 0;
+    static int count = 0;
+    
+    // -1이 입력되면 초기화
+    if (value == -1) {
+        sum = 0;
+        count = 0;
+        return 0.0f;
+    }
+    
+    // 오버플로우 체크
+    if (count >= INT_MAX || 
+        (value > 0 && sum > LLONG_MAX - value) ||
+        (value < 0 && sum < LLONG_MIN - value)) {
+        printf("Warning: Overflow risk detected\n");
+        return (float)sum / count;  // 현재 평균 반환
+    }
+    
+    sum += value;
+    count++;
+    
+    return (float)sum / count;
+}
+
+
+int proc_testMIC() {
+    PaError err = Pa_Initialize();
+    if(err != paNoError) return -1;
+    
+    AudioLevelData levelData = {0, 0, 8000};
+    
+    PaStreamParameters inputParams;
+    inputParams.device = Pa_GetDefaultInputDevice();
+    inputParams.channelCount = 1;  // 모노
+    inputParams.sampleFormat = paInt16;  // paInt16으로 변경
+    inputParams.suggestedLatency = 0.1;  // 100ms
+    inputParams.hostApiSpecificStreamInfo = NULL;
+    
+    PaStream *stream;
+    err = Pa_OpenStream(&stream, &inputParams, NULL, 8000, 256,
+                       paClipOff, levelCallback, &levelData);
+    
+    if(err == paNoError) {
+        Pa_StartStream(stream);
+        
+        safe_running_average(-1);  // 초기화
+		printf("마이크 레벨 모니터링 중... (Max:1000)\n");
+		printf(" val | avrg | peak\n"); 
+        for(int i = 0; i < 100; i++) {
+            Pa_Sleep(100);
+            printf("\r %-4d   %-4d   %-4d", 
+                   levelData.currentLevel, (int)safe_running_average(levelData.currentLevel), levelData.peakLevel);
+            fflush(stdout);
+        }
+        printf("\n");
+        Pa_StopStream(stream);
+        Pa_CloseStream(stream);
+    }
+    
+    Pa_Terminate();
+    return 0;
 }
