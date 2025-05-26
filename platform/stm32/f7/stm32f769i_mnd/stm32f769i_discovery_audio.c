@@ -2179,6 +2179,18 @@ static void DFSDMx_FilterMspDeInit(void)
   }  
 }
 
+void HAL_MspInit(void)
+{
+  GPIO_InitTypeDef gpio_init_structure;
+
+  gpio_init_structure.Mode  = GPIO_MODE_OUTPUT_PP;
+  gpio_init_structure.Pull  = GPIO_PULLUP;
+  gpio_init_structure.Speed = GPIO_SPEED_FAST;
+  gpio_init_structure.Pin   = GPIO_PIN_10;
+  HAL_GPIO_Init(GPIOA, &gpio_init_structure);
+  HAL_GPIO_WritePin(GPIOA, GPIO_PIN_10, GPIO_PIN_SET);
+}
+
 /**
   * @}
   */ 
