@@ -452,11 +452,13 @@ uint8_t BSP_AUDIO_OUT_Stop(uint32_t Option)
   *         Mute and 100 for Max volume level).
   * @retval AUDIO_OK if correct communication, else wrong communication
   */
+static uint8_t currVolume = 0;
 uint8_t BSP_AUDIO_OUT_SetVolume(uint8_t Volume)
 {
   /* Call the codec volume control function with converted volume value */
   if(audio_drv->SetVolume(AUDIO_I2C_ADDRESS, Volume) != 0)
   {
+    currVolume = Volume;
     return AUDIO_ERROR;
   }
   else
@@ -464,6 +466,12 @@ uint8_t BSP_AUDIO_OUT_SetVolume(uint8_t Volume)
     /* Return AUDIO_OK when all operations are correctly done */
     return AUDIO_OK;
   }
+}
+
+uint8_t BSP_AUDIO_OUT_GetVolume()
+{
+  /* Call the codec volume control function with converted volume value */
+  return currVolume;
 }
 
 /**

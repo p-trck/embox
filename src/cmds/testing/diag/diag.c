@@ -283,6 +283,9 @@ void proc_udpTerminal()
 			else if (strcmp(buffer, "mic") == 0) {
 				result = proc_testMIC();
 			}
+            else if (strncmp(buffer, "volume ", 7) == 0) {
+                result = proc_setVolume(buffer);
+            }
 
             if (result == 0) {
                 send_message("OK");

@@ -201,6 +201,41 @@ static int sin_callback(const void *inputBuffer, void *outputBuffer,
 	return 0;
 }
 
+int play_setVolume(int vol)
+{
+	if (vol < 0 || vol > 100) {
+		printf("Volume must be between 0 and 100\n");
+		return -1;
+	}
+
+	extern uint8_t BSP_AUDIO_OUT_SetVolume(uint8_t Volume);
+	BSP_AUDIO_OUT_SetVolume(vol);
+	printf("Volume set to %d\n", vol);
+
+	return 0;
+}
+
+int play_getVolume(void)
+{
+	extern uint8_t BSP_AUDIO_OUT_GetVolume();
+	return BSP_AUDIO_OUT_GetVolume();
+}
+
+int play_Mute(int on)
+{
+	extern uint8_t BSP_AUDIO_OUT_SetMute(uint32_t Cmd);
+
+	if (on) {
+		BSP_AUDIO_OUT_SetMute(1);
+		printf("Muted\n");
+	} else {
+		BSP_AUDIO_OUT_SetMute(0);
+		printf("Unmuted\n");
+	}
+
+	return 0;
+}
+
 int play_sin(int freq, int volume) {
 	int err;
 	int chan_n = 2;
@@ -220,9 +255,12 @@ int play_sin(int freq, int volume) {
 	 * one sine wave cycle will take 100.227 samples
 	 */
 	_sin_w = sample_rate / freq;
-	_sin_h = volume;
+	volume = volume < 0 ? 0 : (volume > 100 ? 100 : volume);
+	_sin_h = volume * 8000 / 100;
 
 	/* Initialize PA */
+	play_Mute(1);
+	Pa_Sleep(100);
 	if (paNoError != (err = Pa_Initialize())) {
 		printf("Portaudio error: could not initialize!\n");
 		goto err_close_fd;
@@ -260,9 +298,13 @@ int play_sin(int freq, int volume) {
 		goto err_terminate_pa;
 	}
 
+	Pa_Sleep(300);
+	play_Mute(0);
+
 	printf("playing..\n");
 	Pa_Sleep(5000);
 	printf("stop\n");
+	play_Mute(1);
 
 	if (paNoError != (err = Pa_StopStream(stream))) {
 		printf("Portaudio error: could not stop stream!\n");
@@ -279,5 +321,7 @@ err_terminate_pa:
 		printf("Portaudio error: could not terminate!\n");
 
 err_close_fd:
+	Pa_Sleep(100);
+	play_Mute(0);
 	return 0;
 }

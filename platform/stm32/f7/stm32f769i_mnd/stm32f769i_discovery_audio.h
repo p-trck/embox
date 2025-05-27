@@ -244,6 +244,7 @@ uint8_t BSP_AUDIO_OUT_Pause(void);
 uint8_t BSP_AUDIO_OUT_Resume(void);
 uint8_t BSP_AUDIO_OUT_Stop(uint32_t Option);
 uint8_t BSP_AUDIO_OUT_SetVolume(uint8_t Volume);
+uint8_t BSP_AUDIO_OUT_GetVolume();
 void    BSP_AUDIO_OUT_SetFrequency(uint32_t AudioFreq);
 void    BSP_AUDIO_OUT_SetAudioFrameSlot(uint32_t AudioFrameSlot);
 uint8_t BSP_AUDIO_OUT_SetMute(uint32_t Cmd);
