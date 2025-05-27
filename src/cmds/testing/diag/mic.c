@@ -54,7 +54,12 @@ static int levelCallback(const void *inputBuffer, void *outputBuffer,
     // RMS 계산 후 0-100 범위로 변환
     float rmsLevel = sqrt(sum / framesPerBuffer);
     data->currentLevel = (int)(rmsLevel * 100);
-	data->dbfs = convert_to_dbfs(rmsLevel, MAX_AMPLITUDE);
+	if(data->currentLevel > 58) {
+		data->currentLevel -= 58;
+	}
+	else {
+		data->currentLevel = 0;
+	}
     
     // 피크 레벨 업데이트 (0-100 범위)
     if(data->currentLevel > data->peakLevel) {
@@ -120,15 +125,15 @@ int proc_testMIC() {
         Pa_StartStream(stream);
         
         safe_running_average(-1);  // 초기화
-		printf("마이크 레벨 모니터링 중... (Max:1000)\n");
-		snprintf(msgbuf, MSG_BUFFER_SIZE, "마이크 레벨 모니터링 중... (Max:1000)\n");
+		printf("마이크 레벨 모니터링 중..\n");
+		snprintf(msgbuf, MSG_BUFFER_SIZE, "마이크 레벨 모니터링 중..\n");
 		send_message(msgbuf);
-		snprintf(msgbuf, MSG_BUFFER_SIZE, " val | avrg | peak | dbfs\n"); 
+		snprintf(msgbuf, MSG_BUFFER_SIZE, " val | avrg | peak\n"); 
 		send_message(msgbuf);
         for(int i = 0; i < 100; i++) {
             Pa_Sleep(MAX_REC_DURATION / 100);
-            snprintf(msgbuf, MSG_BUFFER_SIZE, " %-4d   %-4d   %-4d   %-4d", 
-                   levelData.currentLevel, (int)safe_running_average(levelData.currentLevel), levelData.peakLevel, (int)levelData.dbfs);
+            snprintf(msgbuf, MSG_BUFFER_SIZE, " %-4d   %-4d   %-4d", 
+                   levelData.currentLevel, (int)safe_running_average(levelData.currentLevel), levelData.peakLevel);
 			send_message(msgbuf);
         }
 

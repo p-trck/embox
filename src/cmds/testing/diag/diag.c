@@ -53,11 +53,11 @@ static struct sockaddr_in broadcast_addr, local_addr;
 
 static void print_commands()
 {
-    send_message("mic - Test microphone\n");
-    send_message("spk <freq> <volume> - Test speaker with specified frequency and volume\n");
-    send_message("volume <volume> - Set volume (0-100)\n");
-    send_message("reboot - Reboot the system\n");
-    send_message("exit - Exit connected dev\n");
+    send_message("mic - Test microphone");
+    send_message("spk <freq> <volume> - Test speaker with specified frequency and volume");
+    send_message("volume <volume> - Set volume (0-100)");
+    send_message("reboot - Reboot the system");
+    send_message("exit - Exit connected dev");
 }
 
 char* get_broadcast_address() {
