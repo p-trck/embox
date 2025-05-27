@@ -236,7 +236,7 @@ int play_Mute(int on)
 	return 0;
 }
 
-int play_sin(int freq, int volume) {
+int play_sin(int freq, int volume, uint16_t msec) {
 	int err;
 	int chan_n = 2;
 	int sample_rate = 8000;
@@ -302,7 +302,7 @@ int play_sin(int freq, int volume) {
 	play_Mute(0);
 
 	printf("playing..\n");
-	Pa_Sleep(5000);
+	Pa_Sleep(msec);
 	printf("stop\n");
 	play_Mute(1);
 

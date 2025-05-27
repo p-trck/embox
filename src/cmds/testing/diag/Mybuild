@@ -23,6 +23,7 @@ module diag {
 	source "speaker.c"
 	source "mic.c"
 	source "play.c"
+	source "output.c"
 
 	depends embox.compat.libc.stdio.printf
 	depends embox.compat.libc.str

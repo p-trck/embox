@@ -8,14 +8,14 @@
 
 int proc_testSpeaker(char *buf) {
     int freq = 1000;
-    int volume = 1000;
+    int volume = 100;
 
     if(2 == sscanf(buf, "spk %d %d", &freq, &volume))
     {
         printf("Speaker diagnostic test\n");
         printf("freq: %d, volume: %d\n", freq, volume);
 
-        play_sin(freq, volume);
+        play_sin(freq, volume, 5000);
         return 0;
     }
 

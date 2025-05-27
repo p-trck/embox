@@ -304,7 +304,7 @@ int main(int argc, char **argv) {
 	int opt;
 	int ret;
 
-	while (-1 != (opt = getopt(argc, argv, "phm"))) {
+	while (-1 != (opt = getopt(argc, argv, "phmo"))) {
 		switch (opt) {
 			case 'p': {
 				printf("Hello world\n");
@@ -333,6 +333,10 @@ int main(int argc, char **argv) {
 
 				close(sock);
 				break;
+			case 'o':
+                printf("output source\n");
+                proc_outputSource();
+                break;
 			default:
 				printf("default\n");
 				break;
