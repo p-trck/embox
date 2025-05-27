@@ -51,6 +51,14 @@ static void print_help(char **argv) {
 static int sock;
 static struct sockaddr_in broadcast_addr, local_addr;
 
+static void print_commands()
+{
+    send_message("mic - Test microphone\n");
+    send_message("spk <freq> <volume> - Test speaker with specified frequency and volume\n");
+    send_message("volume <volume> - Set volume (0-100)\n");
+    send_message("reboot - Reboot the system\n");
+    send_message("exit - Exit connected dev\n");
+}
 
 char* get_broadcast_address() {
     struct ifaddrs *ifap, *ifa;
@@ -286,6 +294,10 @@ void proc_udpTerminal()
             else if (strncmp(buffer, "volume ", 7) == 0) {
                 result = proc_setVolume(buffer);
             }
+			else if (strcmp(buffer, "help") == 0) {
+				print_commands();
+                result = 0;
+			}
 
             if (result == 0) {
                 send_message("OK");
