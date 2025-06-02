@@ -19,6 +19,7 @@
 #define MAX_REC_DURATION  10000
 #define MAX_AMPLITUDE 32768.0 // 16비트 오디오의 최대 진폭
 #define MSG_BUFFER_SIZE 0x100
+#define SIZEOF_RXBUFFER 32
 
 double convert_to_dbfs(double rms, double max_amplitude) {
 	double dbfs = (rms > 0) ? 20.0 * log10(rms / max_amplitude) : -INFINITY;
@@ -130,11 +131,21 @@ int proc_testMIC() {
 		send_message(msgbuf);
 		snprintf(msgbuf, MSG_BUFFER_SIZE, " val | avrg | peak\n"); 
 		send_message(msgbuf);
-        for(int i = 0; i < 100; i++) {
-            Pa_Sleep(MAX_REC_DURATION / 100);
+        for(;;) {
+            char buffer[SIZEOF_RXBUFFER];
+            int received_bytes;
+            extern int recv_message(char *message, int len, int waitmsec);
+
             snprintf(msgbuf, MSG_BUFFER_SIZE, " %-4d   %-4d   %-4d", 
                    levelData.currentLevel, (int)safe_running_average(levelData.currentLevel), levelData.peakLevel);
 			send_message(msgbuf);
+            received_bytes = recv_message(buffer, SIZEOF_RXBUFFER, 100);
+            if (received_bytes > 0) {
+                printf("Received message: %s\n", buffer);
+                if (strcmp(buffer, "stop") == 0) {
+                    break;
+                }
+            }
         }
 
 		Pa_StopStream(stream);

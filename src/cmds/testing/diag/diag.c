@@ -165,13 +165,13 @@ int send_message(char *message) {
     return 0;
 }
 
-int recv_message(char *message, int len, int waitsec)
+int recv_message(char *message, int len, int waitmsec)
 {
     // 타임아웃 설정
     struct timeval timeout;
 
-    timeout.tv_sec = waitsec;
-    timeout.tv_usec = 0;
+    timeout.tv_sec = waitmsec/1000;
+    timeout.tv_usec = (waitmsec % 1000) * 1000;
     if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout)) < 0) {
         perror("Setsockopt SO_RCVTIMEO failed");
         return -1;
@@ -203,7 +203,7 @@ int proc_handshake() {
         return -1;
     }
 
-    if(recv_message(buffer, SIZEOF_RXBUFFER, 1) <= 0)
+    if(recv_message(buffer, SIZEOF_RXBUFFER, 1000) <= 0)
     {
         perror("No response received within timeout");
         return -1;
@@ -274,7 +274,7 @@ void proc_udpTerminal()
     send_message("Type 'exit' to quit");
 
     while (1) {
-        received_bytes = recv_message(buffer, SIZEOF_RXBUFFER, 1);
+        received_bytes = recv_message(buffer, SIZEOF_RXBUFFER, 1000);
 		if (received_bytes > 0) {
 			printf("Received message: %s\n", buffer);
 			if (strcmp(buffer, "exit") == 0) {
