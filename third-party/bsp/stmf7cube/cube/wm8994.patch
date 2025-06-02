@@ -8,9 +8,9 @@ diff -aur ../build/extbld/third_party/bsp/stmf7cube/cube/STM32CubeF7-1.17.1/Driv
 +typedef struct
 +{
 +  uint16_t enable:1;
-+  uint16_t gain1:5;
-+  uint16_t gain2:5;
 +  uint16_t gain3:5;
++  uint16_t gain2:5;
++  uint16_t gain1:5;
 +} stReg;
 +
 +typedef union

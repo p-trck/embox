@@ -372,7 +372,21 @@ void *udp_command_listener(void *arg) {
 				}
 			}
 		}
-		else {
+		else if (strncmp(buffer, "eq ", 3) == 0) {
+			extern void setEqParam(uint8_t g1, uint8_t g2, uint8_t g3, uint8_t g4, uint8_t g5);
+			uint8_t g1, g2, g3, g4, g5;
+			if (sscanf(buffer + 3, "%hhu %hhu %hhu %hhu %hhu", &g1, &g2, &g3, &g4, &g5) == 5) {
+				setEqParam(g1, g2, g3, g4, g5);
+				const char *msg = "OK:Equalizer parameters set\n";
+				sendto(sock, msg, strlen(msg), 0,
+				    (struct sockaddr *)&client_addr, addr_len);
+				printf("Equalizer params: %d %d %d %d %d\n", g1, g2, g3, g4, g5);
+			} else {
+				const char *error_msg = "ERR:Invalid equalizer parameters\n";
+				sendto(sock, error_msg, strlen(error_msg), 0,
+				    (struct sockaddr *)&client_addr, addr_len);
+			}
+		} else {
 			const char *unknown_cmd = "Unknown command\n";
 			sendto(sock, unknown_cmd, strlen(unknown_cmd), 0,
 			    (struct sockaddr *)&client_addr, addr_len);
