@@ -181,19 +181,24 @@ static double _sin(double x) {
 	return x;
 }
 
-static int _sin_w = 100;
+static double _sin_w = 100.;
 static int _sin_h = 10000;
+static double phase = 0.0;
 static int sin_callback(const void *inputBuffer, void *outputBuffer,
-		unsigned long framesPerBuffer,
-		const PaStreamCallbackTimeInfo* timeInfo,
-		PaStreamCallbackFlags statusFlags,
-		void *userData) {
-	uint16_t *data;
+    unsigned long framesPerBuffer,
+    const PaStreamCallbackTimeInfo* timeInfo,
+    PaStreamCallbackFlags statusFlags,
+    void *userData) {
+  uint16_t *data;
 
-	data = outputBuffer;
+  data = outputBuffer;
 
-	for (int i = 0; i < framesPerBuffer; i++) {
-		double x = 2 * 3.14 * (i % _sin_w) / _sin_w;
+  for (int i = 0; i < framesPerBuffer; i++) {
+    double x = phase;
+    phase += 2 * 3.14159265359 / _sin_w;
+    if (phase >= 2 * 3.14159265359) {
+      phase -= 2 * 3.14159265359;
+    }
 		*data++ = (uint16_t) ((1. + _sin(x)) * _sin_h); /* Left channel  */
 		*data++ = (uint16_t) ((1. + _sin(x)) * _sin_h); /* Right channel */
 	}
@@ -254,7 +259,7 @@ int play_sin(int freq, int volume, uint16_t msec) {
 	 * e.g., if sample_rate = 44100Hz and freq = 440Hz,
 	 * one sine wave cycle will take 100.227 samples
 	 */
-	_sin_w = sample_rate / freq;
+	_sin_w = (double)sample_rate / freq;
 	volume = volume < 0 ? 0 : (volume > 100 ? 100 : volume);
 	_sin_h = volume * 8000 / 100;
 
