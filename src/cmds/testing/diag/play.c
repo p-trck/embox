@@ -181,30 +181,65 @@ static double _sin(double x) {
 	return x;
 }
 
-static double _sin_w = 100.;
-static int _sin_h = 10000;
-static double phase = 0.0;
-static int sin_callback(const void *inputBuffer, void *outputBuffer,
-    unsigned long framesPerBuffer,
-    const PaStreamCallbackTimeInfo* timeInfo,
-    PaStreamCallbackFlags statusFlags,
-    void *userData) {
-  uint16_t *data;
+#include <math.h>
+static double _sin_h = 10000; // 진폭은 그대로 사용
+static double phase = 0.0;     // 현재 phase
+static double phase_increment; // 샘플당 phase 증가량
 
-  data = outputBuffer;
-
-  for (int i = 0; i < framesPerBuffer; i++) {
-    double x = phase;
-    phase += 2 * 3.14159265359 / _sin_w;
-    if (phase >= 2 * 3.14159265359) {
-      phase -= 2 * 3.14159265359;
-    }
-		*data++ = (uint16_t) ((1. + _sin(x)) * _sin_h); /* Left channel  */
-		*data++ = (uint16_t) ((1. + _sin(x)) * _sin_h); /* Right channel */
-	}
-
-	return 0;
+// 이 함수는 오디오 스트림이 시작되거나 주파수가 변경될 때 한번 호출되어야 합니다.
+void initialize_sine_parameters(int sample_rate, double freq) {
+    // PI 값은 M_PI (math.h)를 사용하는 것이 좋지만, 직접 정의해도 무방합니다.
+    const double PI = 3.14159265359; 
+    phase_increment = (2 * PI * freq) / sample_rate;
+    phase = 0.0; // 새 주파수로 시작할 때 phase를 0으로 초기화
 }
+
+static int sin_callback(const void *inputBuffer, void *outputBuffer,
+                        unsigned long framesPerBuffer,
+                        const PaStreamCallbackTimeInfo* timeInfo,
+                        PaStreamCallbackFlags statusFlags,
+                        void *userData) {
+    uint16_t *data;
+    data = outputBuffer;
+
+    for (int i = 0; i < framesPerBuffer; i++) {
+        double x = phase; // 현재 phase 값을 sin 함수에 전달
+
+        // sin 함수는 일반적으로 _sin이 아닌 sin 입니다.
+        *data++ = (uint16_t) ((1. + _sin(x)) * _sin_h); /* Left channel  */
+        *data++ = (uint16_t) ((1. + _sin(x)) * _sin_h); /* Right channel */
+
+        // phase를 phase_increment 만큼 증가
+        phase += phase_increment;
+
+        // phase가 2*PI를 넘어가면 다시 0 ~ 2*PI 범위로 조정
+        // 이 방식이 '깔끔하지 않은' 주파수에서 오차를 줄여줍니다.
+        // 더 정확한 방법은 fmod를 사용하거나, 매우 미세한 오차 보정을 추가하는 것입니다.
+        //if (phase >= (2 * 3.14159265359)) {
+        //    phase -= (2 * 3.14159265359);
+        //}
+        phase = fmod(phase, (2 * 3.14159265359)); // fmod 사용 시 <math.h> 필요
+    }
+
+    return 0;
+}
+
+// 사용 예시 (pseudo code)
+/*
+int main() {
+    int sample_rate = 8000;
+    double desired_freq = 600.0; // 테스트할 주파수
+
+    // 스트림 시작 전에 한번 호출
+    initialize_sine_parameters(sample_rate, desired_freq);
+
+    // PortAudio 스트림 시작 및 sin_callback 등록 (이 부분은 PortAudio 관련 코드)
+    // ... Pa_OpenStream(...)
+    // ... Pa_StartStream(...)
+    // ...
+    return 0;
+}
+*/
 
 int play_setVolume(int vol)
 {
@@ -259,7 +294,7 @@ int play_sin(int freq, int volume, uint16_t msec) {
 	 * e.g., if sample_rate = 44100Hz and freq = 440Hz,
 	 * one sine wave cycle will take 100.227 samples
 	 */
-	_sin_w = (double)sample_rate / freq;
+  initialize_sine_parameters(sample_rate, freq);
 	volume = volume < 0 ? 0 : (volume > 100 ? 100 : volume);
 	_sin_h = volume * 8000 / 100;
 
