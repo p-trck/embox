@@ -373,6 +373,7 @@ void *udp_command_listener(void *arg) {
 			}
 		}
 		else if (strncmp(buffer, "eq ", 3) == 0) {
+#if 0
 			extern void setEqParam(uint8_t g1, uint8_t g2, uint8_t g3, uint8_t g4, uint8_t g5);
 			uint8_t g1, g2, g3, g4, g5;
 			if (sscanf(buffer + 3, "%hhu %hhu %hhu %hhu %hhu", &g1, &g2, &g3, &g4, &g5) == 5) {
@@ -386,6 +387,7 @@ void *udp_command_listener(void *arg) {
 				sendto(sock, error_msg, strlen(error_msg), 0,
 				    (struct sockaddr *)&client_addr, addr_len);
 			}
+#endif
 		} else {
 			const char *unknown_cmd = "Unknown command\n";
 			sendto(sock, unknown_cmd, strlen(unknown_cmd), 0,
