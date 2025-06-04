@@ -55,12 +55,7 @@ static int levelCallback(const void *inputBuffer, void *outputBuffer,
     // RMS 계산 후 0-100 범위로 변환
     float rmsLevel = sqrt(sum / framesPerBuffer);
     data->currentLevel = (int)(rmsLevel * 100);
-	if(data->currentLevel > 58) {
-		data->currentLevel -= 58;
-	}
-	else {
-		data->currentLevel = 0;
-	}
+    //data->dbfs = convert_to_dbfs(rmsLevel, MAX_AMPLITUDE);
     
     // 피크 레벨 업데이트 (0-100 범위)
     if(data->currentLevel > data->peakLevel) {
@@ -129,15 +124,19 @@ int proc_testMIC() {
 		printf("마이크 레벨 모니터링 중..\n");
 		snprintf(msgbuf, MSG_BUFFER_SIZE, "마이크 레벨 모니터링 중..\n");
 		send_message(msgbuf);
-		snprintf(msgbuf, MSG_BUFFER_SIZE, " val | avrg | peak\n"); 
-		send_message(msgbuf);
         for(;;) {
             char buffer[SIZEOF_RXBUFFER];
             int received_bytes;
+            int lv;
             extern int recv_message(char *message, int len, int waitmsec);
 
-            snprintf(msgbuf, MSG_BUFFER_SIZE, " %-4d   %-4d   %-4d", 
-                   levelData.currentLevel, (int)safe_running_average(levelData.currentLevel), levelData.peakLevel);
+            #if 0
+            lv = (int)levelData.currentLevel - 36;
+            lv = (lv < 0) ? 0 : lv;
+            #else
+            lv = (int)levelData.currentLevel;
+            #endif
+            snprintf(msgbuf, MSG_BUFFER_SIZE, " %-4d RMS", lv);
 			send_message(msgbuf);
             received_bytes = recv_message(buffer, SIZEOF_RXBUFFER, 100);
             if (received_bytes > 0) {
