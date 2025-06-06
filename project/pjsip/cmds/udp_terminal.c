@@ -452,10 +452,10 @@ void *udp_command_listener(void *arg) {
 				perror("Failed to open version file");
 			}
 		}
-		else if (strncmp(buffer, "volume", 6) == 0) {
+		else if (strncmp(buffer, "vol", 3) == 0) {
 			char vol_str[6];
 
-			if(buffer[6] != ' ') { // get volume
+			if(buffer[3] != ' ') { // get volume
 				extern uint8_t BSP_AUDIO_OUT_GetVolume(void);
 				int vol = BSP_AUDIO_OUT_GetVolume();
 				snprintf(vol_str, sizeof(vol_str), "%d\n", vol);
@@ -464,7 +464,7 @@ void *udp_command_listener(void *arg) {
 				continue;
 			}
 
-			int vol = atoi(buffer + 7);
+			int vol = atoi(buffer + 4);
 			if (vol >= 0 && vol <= 100) {
 				extern uint8_t BSP_AUDIO_OUT_SetVolume(uint8_t Volume);
 
@@ -485,10 +485,26 @@ void *udp_command_listener(void *arg) {
 					sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
 					printf(msg);
 				}
-			} else {
+			} 
+			else {
 				const char *msg = "ERR:Volume must be between 0-100\n";
 				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
 			}
+		}
+		else if (strncmp(buffer, "help", 4) == 0) {
+			const char *msg = "Usage:\n"
+				"vol [0-100]\n" \
+				"net [cmd] [param]\n" \
+				"  e.g. net address	192.168.21.33\n" \
+				"  e.g. net netmask 255.255.255.0\n" \
+				"  e.g. net gateway 192.168.21.1\n" \
+				"  e.g. net hwaddress 00:11:22:33:44:55\n" \
+				"getip\n" \
+				"reboot\n" \
+				"version\n";
+
+			sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+			printf("%s", msg);
 		}
 		else if (strncmp(buffer, "net", 3) == 0) {
 			if (buffer[3] != ' ') {
