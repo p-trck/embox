@@ -43,7 +43,7 @@ static void print_help(char **argv) {
 #define STT_FILE  OPTION_STRING_GET(diagstatus)
 
 #define PORT 50555
-#define SIZEOF_RXBUFFER 32
+#define SIZEOF_RXBUFFER 64
 #define MSG_HANDSHAKE "whoareyou"
 #define MSG_RESPONSE "iamdiag"
 
@@ -61,15 +61,35 @@ static void print_commands()
 
 static int print_version()
 {
-    char buffer[SIZEOF_RXBUFFER];
+    FILE *fp;
+    char line[SIZEOF_RXBUFFER];
     extern char* get_ip_address();
+    
+    fp = fopen("/version", "r");
+    if (fp != NULL) {
+        while (fgets(line, sizeof(line), fp)) {
+            if (strncmp(line, "Version", 7) == 0) {
+                line[strcspn(line, "\n")] = 0;
+                send_message(line);
+            }
+            else if (strncmp(line, "Product", 7) == 0) {
+                line[strcspn(line, "\n")] = 0;
+                send_message(line);
+            }
+            else if (strncmp(line, "Date", 4) == 0) {
+                line[strcspn(line, "\n")] = 0;
+                send_message(line);
+            }
+        }
+        fclose(fp);
+    }
+    else {
+        perror("Failed to open version file");
+        return -1;
+    }
 
-    send_message("MODEL: NetSpeaker");
-    send_message("VERSION: 1.0.0");
-    send_message("DIAGNOSTIC MODE");
-    snprintf(buffer, SIZEOF_RXBUFFER, "IP: %s", get_ip_address());
-    send_message(buffer);
-    send_message("Type 'exit' to quit");
+    snprintf(line, SIZEOF_RXBUFFER, "IP: %s", get_ip_address());
+    send_message(line);
 
     return 0;
 }
@@ -289,7 +309,9 @@ void proc_udpTerminal()
     int received_bytes;
     int result = -1;
     
+    send_message("\n[[[ DIAGNOSTIC MODE ]]]\n");
     print_version();
+    send_message("Type 'exit' to quit");
 
     while (1) {
         received_bytes = recv_message(buffer, SIZEOF_RXBUFFER, 1000);
