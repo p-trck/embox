@@ -353,6 +353,37 @@ int init_udp_socket() {
 	return sock;
 }
 
+void printNetInfo(int sock, struct sockaddr_in *client_addr, socklen_t addr_len) {
+	FILE *fp = fopen(CONFIG_FILE, "r");
+
+	if (fp != NULL) {
+		char line[MAX_LINE];
+		while (fgets(line, sizeof(line), fp)) {
+	        char *trimmed = line;
+
+			while (*trimmed == ' ' || *trimmed == '\t') trimmed++;
+
+			if (strncmp(trimmed, "address", 7) == 0) {
+				sendto(sock, trimmed, strlen(trimmed), 0, (struct sockaddr *)client_addr, addr_len);
+				printf("%s", trimmed);
+			}
+			else if (strncmp(trimmed, "netmask", 7) == 0) {
+				sendto(sock, trimmed, strlen(trimmed), 0, (struct sockaddr *)client_addr, addr_len);
+				printf("%s", trimmed);
+			}
+			else if (strncmp(trimmed, "gateway", 7) == 0) {
+				sendto(sock, trimmed, strlen(trimmed), 0, (struct sockaddr *)client_addr, addr_len);
+				printf("%s", trimmed);
+			}
+			else if (strncmp(trimmed, "hwaddress", 9) == 0) {
+				sendto(sock, trimmed, strlen(trimmed), 0, (struct sockaddr *)client_addr, addr_len);
+				printf("%s", trimmed);
+			}
+		}
+		fclose(fp);
+	}
+}
+
 void *udp_command_listener(void *arg) {
 	char buffer[64];
 	struct sockaddr_in client_addr;
@@ -459,7 +490,12 @@ void *udp_command_listener(void *arg) {
 				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
 			}
 		}
-		else if (strncmp(buffer, "net ", 4) == 0) {
+		else if (strncmp(buffer, "net", 3) == 0) {
+			if (buffer[3] != ' ') {
+				printNetInfo(sock, &client_addr, addr_len);
+				continue;
+			}
+
 			extern uint8_t get_call_state(void);
 			if(get_call_state() == 1) {
 				const char *msg = "ERR:Calling\n";
