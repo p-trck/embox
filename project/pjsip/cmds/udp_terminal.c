@@ -429,25 +429,31 @@ void *udp_command_listener(void *arg) {
 			
 			fp = fopen("/version", "r");
 			if (fp != NULL) {
+				char printf_buffer[256] = {0,};
+				uint8_t show = 0;
+
 				while (fgets(buffer, sizeof(buffer), fp)) {
-					uint8_t show = 0;
 
 					if (strncmp(buffer, "Version", 7) == 0) {
 						show = 1;
+						strncat(printf_buffer, buffer, sizeof(printf_buffer) - 1);
 					}
 					else if (strncmp(buffer, "Product", 7) == 0) {
 						show = 1;
+						strncat(printf_buffer, buffer, sizeof(printf_buffer) - 1);
 					}
 					else if (strncmp(buffer, "Date", 4) == 0) {
 						show = 1;
-					}
-
-					if(show) {
-						sendto(sock, buffer, strlen(buffer), 0, (struct sockaddr *)&client_addr, addr_len);
-						printf("%s", buffer);
+						strncat(printf_buffer, buffer, sizeof(printf_buffer) - 1);
 					}
 				}
 				fclose(fp);
+
+				if(show)
+				{
+					sendto(sock, printf_buffer, strlen(printf_buffer), 0, (struct sockaddr *)&client_addr, addr_len);
+					printf("%s", printf_buffer);
+				}
 			} else {
 				perror("Failed to open version file");
 			}
