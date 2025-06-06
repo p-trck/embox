@@ -54,8 +54,7 @@ static struct sockaddr_in sender_addr;
 static void print_commands()
 {
     send_message("mic - Test microphone");
-    send_message("spk <freq> <volume> - Test speaker with specified frequency and volume");
-    send_message("volume <volume> - Set volume (0-100)");
+    send_message("stop - Stop current test");
     send_message("reboot - Reboot the system");
     send_message("exit - Exit connected dev");
 }
@@ -304,17 +303,11 @@ void proc_udpTerminal()
 				safe_system_reset();
                 result = 0;
 			}
-			else if (strncmp(buffer, "spk", 3) == 0) {
-				result = proc_testSpeaker(buffer);
-			}
 			else if (strcmp(buffer, "mic") == 0) {
 				result = proc_testMIC();
 			}
-            else if (strncmp(buffer, "volume ", 7) == 0) {
-                result = proc_setVolume(buffer);
-            }
-            else if (strncmp(buffer, "ver ", 7) == 0) {
-                result = print_version(buffer);
+            else if (strcmp(buffer, "ver") == 0) {
+                result = print_version();
             }
 			else if (strcmp(buffer, "help") == 0) {
 				print_commands();
