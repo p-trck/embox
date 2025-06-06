@@ -21,8 +21,6 @@
 #define THIS_FILE "UDT"
 
 #define PORT       OPTION_GET(NUMBER, udp_port)
-#define MODEL_NAME "NetSpeaker"
-#define VERSION    "1.0.0"
 
 static int sock;
 static struct sockaddr_in broadcast_addr, local_addr;
@@ -127,8 +125,9 @@ int safe_system_reset(void) {
 #include <ctype.h>
 #include <stdlib.h>
 
-#define MAX_LINE 256
+#define MAX_LINE 64
 #define CONFIG_FILE "/conf/network"
+#define PARAMS_FILE "/conf/params"
 
 // IP 주소 유효성 검사
 int validate_ip(const char *str) {
@@ -194,11 +193,11 @@ int set_network_config(const char *option, const char *value) {
     FILE *fp = fopen(CONFIG_FILE, "r");
     if (!fp) return -1;
 
-    char lines[1024][MAX_LINE];
+    char lines[32][MAX_LINE];
     int line_count = 0;
 
     // 파일을 라인 단위로 읽어 메모리에 저장
-    while (line_count < 1024 && fgets(lines[line_count], MAX_LINE, fp)) {
+    while (line_count < 32 && fgets(lines[line_count], MAX_LINE, fp)) {
         lines[line_count][strcspn(lines[line_count], "\n")] = '\0'; // 개행 문자 제거
         line_count++;
     }
@@ -232,6 +231,77 @@ int set_network_config(const char *option, const char *value) {
     if (!updated) {
         return -1;
     }
+
+	return 0;
+}
+
+int saveParams(const char *option, const char *value) {
+    // 파일 읽기
+    FILE *fp = fopen(PARAMS_FILE, "r");
+    if (!fp) return -1;
+
+    char lines[32][MAX_LINE];
+    int line_count = 0;
+
+    // 파일을 라인 단위로 읽어 메모리에 저장
+    while (line_count < 32 && fgets(lines[line_count], MAX_LINE, fp)) {
+        lines[line_count][strcspn(lines[line_count], "\n")] = '\0'; // 개행 문자 제거
+        line_count++;
+    }
+    fclose(fp);
+
+    // 파일 쓰기
+    fp = fopen(PARAMS_FILE, "w");
+    if (!fp) return -1;
+
+    // 라인을 순회하며 옵션에 해당하는 라인을 수정
+    int updated = 0;
+    for (int i = 0; i < line_count; i++) {
+        char *line = lines[i];
+
+        // 옵션에 해당하는 라인인지 확인
+        if (strncmp(line, option, strlen(option)) == 0){
+            fprintf(fp, "%s %s\n", option, value);
+            updated = 1;
+        } else {
+            fprintf(fp, "%s\n", line);
+        }
+    }
+
+    fclose(fp);
+    if (!updated) {
+        return -1;
+    }
+
+	return 0;
+}
+
+int restoreVolumeLevel()
+{
+	FILE *fp;
+	char line[64];
+	int volume = -1; // 기본 볼륨 레벨
+
+	fp = fopen(PARAMS_FILE, "r");
+	if (fp != NULL) {
+		while (fgets(line, sizeof(line), fp)) {
+			if (strncmp(line, "Volume:", 7) == 0) {
+				volume = atoi(line + 7);
+				break;
+			}
+		}
+		fclose(fp);
+	}
+
+	if(volume < 0 || volume > 100) {
+		printf("Invalid volume level.(%d)\n", volume);
+		saveParams("Volume:", "70");
+	}
+	else {
+		printf("Restoring volume level: %d\n", volume);
+		extern uint8_t BSP_AUDIO_OUT_SetVolume(uint8_t Volume);
+		BSP_AUDIO_OUT_SetVolume(volume);
+	}
 
 	return 0;
 }
@@ -290,6 +360,8 @@ void *udp_command_listener(void *arg) {
 
 	struct timeval timeout;
 
+	restoreVolumeLevel();
+
 	timeout.tv_sec = 1;
 	timeout.tv_usec = 0;
 	if (setsockopt(sock, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout))
@@ -321,29 +393,70 @@ void *udp_command_listener(void *arg) {
 			sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
 			safe_system_reset();
 		}
-		else if (strcmp(buffer, "model") == 0) {
-			sendto(sock, MODEL_NAME, strlen(MODEL_NAME), 0, (struct sockaddr *)&client_addr, addr_len);
-			sendto(sock, "\n", 1, 0, (struct sockaddr *)&client_addr, addr_len);
-			printf("Model:%s\n", MODEL_NAME);
-		}
 		else if (strcmp(buffer, "version") == 0) {
-			sendto(sock, VERSION, strlen(VERSION), 0, (struct sockaddr *)&client_addr, addr_len);
-			sendto(sock, "\n", 1, 0, (struct sockaddr *)&client_addr, addr_len);
-			printf("Version:%s\n", VERSION);
+			FILE *fp;
+			
+			fp = fopen("/version", "r");
+			if (fp != NULL) {
+				while (fgets(buffer, sizeof(buffer), fp)) {
+					uint8_t show = 0;
+
+					if (strncmp(buffer, "Version", 7) == 0) {
+						show = 1;
+					}
+					else if (strncmp(buffer, "Product", 7) == 0) {
+						show = 1;
+					}
+					else if (strncmp(buffer, "Date", 4) == 0) {
+						show = 1;
+					}
+
+					if(show) {
+						sendto(sock, buffer, strlen(buffer), 0, (struct sockaddr *)&client_addr, addr_len);
+						printf("%s", buffer);
+					}
+				}
+				fclose(fp);
+			} else {
+				perror("Failed to open version file");
+			}
 		}
-		else if (strncmp(buffer, "volume ", 7) == 0) {
+		else if (strncmp(buffer, "volume", 6) == 0) {
+			char vol_str[6];
+
+			if(buffer[6] != ' ') { // get volume
+				extern uint8_t BSP_AUDIO_OUT_GetVolume(void);
+				int vol = BSP_AUDIO_OUT_GetVolume();
+				snprintf(vol_str, sizeof(vol_str), "%d\n", vol);
+				sendto(sock, vol_str, strlen(vol_str), 0, (struct sockaddr *)&client_addr, addr_len);
+				printf("Volume: %d\n", vol);
+				continue;
+			}
+
 			int vol = atoi(buffer + 7);
 			if (vol >= 0 && vol <= 100) {
 				extern uint8_t BSP_AUDIO_OUT_SetVolume(uint8_t Volume);
-				const char *msg = "OK:Set audio volume\n";
-				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
 
 				BSP_AUDIO_OUT_SetVolume(vol);
 
-				printf("Volume:%d\n", vol);
+				const char *msg = "DO:Wait saving..\n";
+				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+				snprintf(vol_str, sizeof(vol_str), "%d", vol);
+				if(saveParams("Volume:", vol_str) == 0)
+				{
+					const char *msg = "OK:Saved\n";
+					sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+					printf(msg);
+				}
+				else
+				{
+					const char *msg = "ERR:Failed to save volume\n";
+					sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+					printf(msg);
+				}
 			} else {
-				const char *error_msg = "ERR:Volume must be between 0-100\n";
-				sendto(sock, error_msg, strlen(error_msg), 0, (struct sockaddr *)&client_addr, addr_len);
+				const char *msg = "ERR:Volume must be between 0-100\n";
+				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
 			}
 		}
 		else if (strncmp(buffer, "net ", 4) == 0) {
@@ -359,7 +472,7 @@ void *udp_command_listener(void *arg) {
 				if (value != NULL) {
 					*value = '\0';
 					value++;
-					const char *msg = "OK:Check params\n";
+					const char *msg = "DO:Wait saving..\n";
 					sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
 					if (set_network_config(option, value) == 0) {
 						const char *msg = "OK:Saved params\n";
@@ -371,23 +484,6 @@ void *udp_command_listener(void *arg) {
 					}
 				}
 			}
-		}
-		else if (strncmp(buffer, "eq ", 3) == 0) {
-#if 0
-			extern void setEqParam(uint8_t g1, uint8_t g2, uint8_t g3, uint8_t g4, uint8_t g5);
-			uint8_t g1, g2, g3, g4, g5;
-			if (sscanf(buffer + 3, "%hhu %hhu %hhu %hhu %hhu", &g1, &g2, &g3, &g4, &g5) == 5) {
-				setEqParam(g1, g2, g3, g4, g5);
-				const char *msg = "OK:Equalizer parameters set\n";
-				sendto(sock, msg, strlen(msg), 0,
-				    (struct sockaddr *)&client_addr, addr_len);
-				printf("Equalizer params: %d %d %d %d %d\n", g1, g2, g3, g4, g5);
-			} else {
-				const char *error_msg = "ERR:Invalid equalizer parameters\n";
-				sendto(sock, error_msg, strlen(error_msg), 0,
-				    (struct sockaddr *)&client_addr, addr_len);
-			}
-#endif
 		} else {
 			const char *unknown_cmd = "Unknown command\n";
 			sendto(sock, unknown_cmd, strlen(unknown_cmd), 0,

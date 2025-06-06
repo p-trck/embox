@@ -464,6 +464,7 @@ uint8_t BSP_AUDIO_OUT_SetVolume(uint8_t Volume)
   else
   {
     /* Return AUDIO_OK when all operations are correctly done */
+    currVolume = Volume;
     return AUDIO_OK;
   }
 }
