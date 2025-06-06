@@ -42,14 +42,14 @@ static void print_help(char **argv) {
 
 #define STT_FILE  OPTION_STRING_GET(diagstatus)
 
-#define BROADCAST_IP "255.255.255.255"
-#define PORT 9090
+#define PORT 50555
 #define SIZEOF_RXBUFFER 32
 #define MSG_HANDSHAKE "whoareyou"
 #define MSG_RESPONSE "iamdiag"
 
 static int sock;
-static struct sockaddr_in broadcast_addr, local_addr;
+static struct sockaddr_in broadcast_addr, local_addr, connected_addr;
+static struct sockaddr_in sender_addr;
 
 static void print_commands()
 {
@@ -60,9 +60,24 @@ static void print_commands()
     send_message("exit - Exit connected dev");
 }
 
+static int print_version()
+{
+    char buffer[SIZEOF_RXBUFFER];
+    extern char* get_ip_address();
+
+    send_message("MODEL: NetSpeaker");
+    send_message("VERSION: 1.0.0");
+    send_message("DIAGNOSTIC MODE");
+    snprintf(buffer, SIZEOF_RXBUFFER, "IP: %s", get_ip_address());
+    send_message(buffer);
+    send_message("Type 'exit' to quit");
+
+    return 0;
+}
+
 char* get_broadcast_address() {
     struct ifaddrs *ifap, *ifa;
-    static char broadcast_addr[INET_ADDRSTRLEN];
+    static char broadcast_ipaddr[INET_ADDRSTRLEN];
     
     // Get list of network interfaces
     if (getifaddrs(&ifap) == -1) {
@@ -76,10 +91,10 @@ char* get_broadcast_address() {
             !(ifa->ifa_flags & IFF_LOOPBACK) && (ifa->ifa_flags & IFF_BROADCAST)) {
             
             struct sockaddr_in *broadcast = (struct sockaddr_in *)ifa->ifa_broadaddr;
-            inet_ntop(AF_INET, &broadcast->sin_addr, broadcast_addr, INET_ADDRSTRLEN);
-            printf("Using interface: %s, Broadcast address: %s\n", ifa->ifa_name, broadcast_addr);
+            inet_ntop(AF_INET, &broadcast->sin_addr, broadcast_ipaddr, INET_ADDRSTRLEN);
+            printf("Using interface: %s, Broadcast address: %s\n", ifa->ifa_name, broadcast_ipaddr);
             freeifaddrs(ifap);
-            return broadcast_addr;
+            return broadcast_ipaddr;
         }
     }
     
@@ -156,7 +171,7 @@ int safe_system_reset(void) {
 
 int send_message(char *message) {
     if (sendto(sock, message, strlen(message), 0, 
-               (struct sockaddr*)&broadcast_addr, sizeof(broadcast_addr)) < 0) {
+               (struct sockaddr*)&connected_addr, sizeof(connected_addr)) < 0) {
         perror("Broadcast send failed");
         return -1;
     }
@@ -177,7 +192,6 @@ int recv_message(char *message, int len, int waitmsec)
         return -1;
     }
 
-    struct sockaddr_in sender_addr;
     socklen_t sender_len = sizeof(sender_addr);
     int received_bytes = recvfrom(sock, message, len - 1, 0,
                                 (struct sockaddr*)&sender_addr, &sender_len);
@@ -209,9 +223,16 @@ int proc_handshake() {
         return -1;
     }
    
-    int result = (strcmp(buffer, MSG_RESPONSE) == 0) ? 0 : -1;
+    if(strcmp(buffer, MSG_RESPONSE) != 0)
+    {
+        printf("Handshake failed: %s\n", buffer);
+        return -1;
+    }
     
-    return result;
+    memcpy(&connected_addr, &sender_addr, sizeof(sender_addr));
+    printf("Handshake successful\n");
+
+    return 0;
 }
 
 int init_udp_socket()
@@ -256,6 +277,9 @@ int init_udp_socket()
     broadcast_addr.sin_family = AF_INET;
     broadcast_addr.sin_port = htons(PORT);
     broadcast_addr.sin_addr.s_addr = inet_addr(broadcast_ip);
+
+    memset(&sender_addr, 0, sizeof(sender_addr));
+    memcpy(&connected_addr, &broadcast_addr, sizeof(broadcast_addr));
     
 	return sock;
 }
@@ -266,12 +290,7 @@ void proc_udpTerminal()
     int received_bytes;
     int result = -1;
     
-	send_message("MODEL: NetSpeaker");
-    send_message("VERSION: 1.0.0");
-    send_message("DIAGNOSTIC MODE");
-    snprintf(buffer, SIZEOF_RXBUFFER, "IP: %s", get_ip_address());
-    send_message(buffer);
-    send_message("Type 'exit' to quit");
+    print_version();
 
     while (1) {
         received_bytes = recv_message(buffer, SIZEOF_RXBUFFER, 1000);
@@ -293,6 +312,9 @@ void proc_udpTerminal()
 			}
             else if (strncmp(buffer, "volume ", 7) == 0) {
                 result = proc_setVolume(buffer);
+            }
+            else if (strncmp(buffer, "ver ", 7) == 0) {
+                result = print_version(buffer);
             }
 			else if (strcmp(buffer, "help") == 0) {
 				print_commands();
