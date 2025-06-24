@@ -261,6 +261,24 @@ static void handle_sigint(int sig) {
     printf("\nSIGINT received, stopping application...\n");
 }
 
+static int getMuteMicLv(void) {
+	char buffer[8];
+	int muteMicLv = 0;
+	extern int configParams_get(const char *option, char *value, size_t len);
+
+	if(0 == configParams_get("muteMicLv", buffer, sizeof(buffer)))
+	{
+		if (buffer[0] != '\0') {
+			muteMicLv = atoi(buffer);
+		}
+	}
+	else
+	{
+		muteMicLv = 20;
+	}
+
+	return muteMicLv;
+}
 /*
  * main()
  *
@@ -325,25 +343,28 @@ int main(int argc, char *argv[]) {
 	#if 1
 	puts("PJSIP running..");
 	unsigned lv_rx, lv_tx, muted = 0;
+	unsigned mute_miclv;
+
 	for(;;) {
+		mute_miclv = getMuteMicLv();
 		pjsua_conf_get_signal_level(0, &lv_tx, &lv_rx);
 		static unsigned long last_low_tx = 0;
 
-		if (!muted && lv_tx > 30) {
+		if (!muted && lv_tx > mute_miclv + 10) {
 			muted = 1;
 			pjsua_conf_adjust_rx_level(0, 0.);
 			//puts("Mute");
-		} else if (muted && lv_tx < 20) {
+		} else if (muted && lv_tx < mute_miclv) {
 			unsigned long current_time = clock();
 			if (last_low_tx == 0) {
 				last_low_tx = current_time;
-			} else if ((current_time - last_low_tx) >= CLOCKS_PER_SEC * 0.5) {
+			} else if ((current_time - last_low_tx) >= CLOCKS_PER_SEC * 0.3) {
 				muted = 0;
 				pjsua_conf_adjust_rx_level(0, 1.);
 				//puts("Unmute");
 				last_low_tx = 0;
 			}
-		} else if (muted && lv_tx >= 20) {
+		} else if (muted && lv_tx >= mute_miclv) {
 			last_low_tx = 0;
 		}
 		if(terminate_sip)
@@ -351,7 +372,7 @@ int main(int argc, char *argv[]) {
 			break;
 		}
 		//printf(">RX:%d\r\n", lv_rx);
-		usleep(10000);
+		usleep(100000);
 	}
 	#endif
 

@@ -129,6 +129,121 @@ int safe_system_reset(void) {
 #define CONFIG_FILE "/conf/network"
 #define PARAMS_FILE "/conf/params"
 
+typedef enum {
+	CONFIGPARAM_VOLUME,
+	CONFIGPARAM_MUTEMICLV,
+	CONFIGPARAM_MAX
+} enConfigParamType_t;
+
+#define DEFAULT_VOLUME "70"
+#define DEFAULT_MUTEMICLV "20"
+#define SIZEOF_DATA_ARRAY 16
+
+typedef struct {
+	const char *name;
+	const char *default_data;
+	char data[SIZEOF_DATA_ARRAY];
+} stConfigParams_t;
+
+stConfigParams_t configParams[2] = {
+	[0] ={
+		.name = "Volume",
+		.default_data = DEFAULT_VOLUME,
+		.data = ""
+	},
+	[1] = {
+		.name = "muteMicLv",
+		.default_data = DEFAULT_MUTEMICLV,
+		.data = ""
+	}
+};
+
+
+int configParams_save() {
+	// 파일 쓰기
+	FILE *fp = fopen(PARAMS_FILE, "w");
+	if (!fp) return -1;
+
+	for(int i = 0; i < CONFIGPARAM_MAX; i++) 
+	{
+		if (configParams[i].name) 
+		{
+			fprintf(fp, "%s: %s\n", configParams[i].name, configParams[i].data);
+		}
+	}
+
+	fclose(fp);
+	return 0;
+}
+
+int configParams_set(const char *option, const char *value) {
+	for (int i = 0; i < CONFIGPARAM_MAX; i++) {
+		if (strcmp(configParams[i].name, option) == 0) {
+			strncpy(configParams[i].data, value, sizeof(configParams[i].data) - 1);
+			configParams[i].data[sizeof(configParams[i].data) - 1] = '\0';
+			return 0;
+		}
+	}
+
+	return -1;
+}
+
+int configParams_get(const char *option, char *value, size_t len) {
+	for (int i = 0; i < CONFIGPARAM_MAX; i++) {
+		if (strcmp(configParams[i].name, option) == 0) {
+			strncpy(value, configParams[i].data, len - 1);
+			value[len - 1] = '\0'; // Ensure null termination
+			return 0;
+		}
+	}
+
+	// 옵션이 존재하지 않으면 빈 문자열 반환
+	value[0] = '\0';
+	return -1;
+}
+
+int configParams_load() {
+	// 파일 읽기
+	FILE *fp = fopen(PARAMS_FILE, "r");
+	if (!fp) return -1;
+
+	char line[MAX_LINE];
+	int i = 0;
+
+	// 파일을 라인 단위로 읽어 옵션과 값을 설정
+	while (fgets(line, sizeof(line), fp) && i < CONFIGPARAM_MAX) {
+		char *name_end = strchr(line, ':');
+		if (name_end) {
+			*name_end = '\0'; // ':' 문자 제거
+			for (int j = 0; j < CONFIGPARAM_MAX; j++) {
+				if (strcmp(configParams[j].name, line) == 0) {
+					char *value_start = name_end + 1;
+					while (*value_start == ' ' || *value_start == '\t')
+						value_start++;
+					strncpy(configParams[j].data, value_start, sizeof(configParams[i].data) - 1);
+					configParams[i].data[sizeof(configParams[i].data) - 1] = '\0';
+					configParams[j].data[strcspn(configParams[j].data, "\r\n")] = '\0';
+					printf("Loaded config param: %s = %s\n", configParams[j].name, configParams[j].data);
+					i++;
+					break;
+				}
+			}
+		}
+	}
+	fclose(fp);
+
+	if (i < CONFIGPARAM_MAX) {
+		for(int j = 0; j < CONFIGPARAM_MAX; j++) {
+			configParams_set(configParams[j].name, configParams[j].default_data);
+		}
+
+		configParams_save(); // 기본값으로 초기화 후 저장
+  		printf("Config params initialized with defaults.\n");
+	}
+
+	return 0;
+}
+
 // IP 주소 유효성 검사
 int validate_ip(const char *str) {
     char temp[32];
@@ -235,75 +350,31 @@ int set_network_config(const char *option, const char *value) {
 	return 0;
 }
 
-int saveParams(const char *option, const char *value) {
-    // 파일 읽기
-    FILE *fp = fopen(PARAMS_FILE, "r");
-    if (!fp) return -1;
-
-    char lines[32][MAX_LINE];
-    int line_count = 0;
-
-    // 파일을 라인 단위로 읽어 메모리에 저장
-    while (line_count < 32 && fgets(lines[line_count], MAX_LINE, fp)) {
-        lines[line_count][strcspn(lines[line_count], "\n")] = '\0'; // 개행 문자 제거
-        line_count++;
-    }
-    fclose(fp);
-
-    // 파일 쓰기
-    fp = fopen(PARAMS_FILE, "w");
-    if (!fp) return -1;
-
-    // 라인을 순회하며 옵션에 해당하는 라인을 수정
-    int updated = 0;
-    for (int i = 0; i < line_count; i++) {
-        char *line = lines[i];
-
-        // 옵션에 해당하는 라인인지 확인
-        if (strncmp(line, option, strlen(option)) == 0){
-            fprintf(fp, "%s %s\n", option, value);
-            updated = 1;
-        } else {
-            fprintf(fp, "%s\n", line);
-        }
-    }
-
-    fclose(fp);
-    if (!updated) {
-        return -1;
-    }
-
-	return 0;
-}
-
 int restoreVolumeLevel()
 {
-	FILE *fp;
-	char line[64];
+	char data[SIZEOF_DATA_ARRAY];
 	int volume = -1; // 기본 볼륨 레벨
 
-	fp = fopen(PARAMS_FILE, "r");
-	if (fp != NULL) {
-		while (fgets(line, sizeof(line), fp)) {
-			if (strncmp(line, "Volume:", 7) == 0) {
-				volume = atoi(line + 7);
-				break;
-			}
+	if(0 == configParams_get("Volume", data, sizeof(data)))
+	{
+		volume = atoi(data);
+		printf("Loaded volume level: %d\n", volume);
+
+		if(volume < 0 || volume > 100) {
+			printf("Invalid volume level.(%d)\n", volume);
+			configParams_set("Volume", DEFAULT_VOLUME);
+			configParams_save();
 		}
-		fclose(fp);
+		else {
+			printf("Restoring volume level: %d\n", volume);
+			extern uint8_t BSP_AUDIO_OUT_SetVolume(uint8_t Volume);
+			BSP_AUDIO_OUT_SetVolume(volume);
+		}
+
+		return 0;
 	}
 
-	if(volume < 0 || volume > 100) {
-		printf("Invalid volume level.(%d)\n", volume);
-		saveParams("Volume:", "70");
-	}
-	else {
-		printf("Restoring volume level: %d\n", volume);
-		extern uint8_t BSP_AUDIO_OUT_SetVolume(uint8_t Volume);
-		BSP_AUDIO_OUT_SetVolume(volume);
-	}
-
-	return 0;
+	return -1;
 }
 
 int init_udp_socket() {
@@ -458,6 +529,21 @@ void *udp_command_listener(void *arg) {
 				perror("Failed to open version file");
 			}
 		}
+		else if (strncmp(buffer, "save", 3) == 0) {
+			const char *msg = "DO:Wait saving..\n";
+			sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr,
+			    addr_len);
+			if (configParams_save() == 0) {
+				const char *msg = "OK:Saved params\n";
+				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+				printf("Configuration saved successfully.\n");
+			}
+			else {
+				const char *msg = "ERR:Failed to save params\n";
+				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+				printf("Failed to save configuration.\n");
+			}
+		}
 		else if (strncmp(buffer, "vol", 3) == 0) {
 			char vol_str[6];
 
@@ -476,12 +562,10 @@ void *udp_command_listener(void *arg) {
 
 				BSP_AUDIO_OUT_SetVolume(vol);
 
-				const char *msg = "DO:Wait saving..\n";
-				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
 				snprintf(vol_str, sizeof(vol_str), "%d", vol);
-				if(saveParams("Volume:", vol_str) == 0)
+				if(configParams_set("Volume", vol_str) == 0)
 				{
-					const char *msg = "OK:Saved\n";
+					const char *msg = "OK\n";
 					sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
 					printf(msg);
 				}
@@ -500,6 +584,8 @@ void *udp_command_listener(void *arg) {
 		else if (strncmp(buffer, "help", 4) == 0) {
 			const char *msg = "Usage:\n"
 				"vol [0-100]\n" \
+				"thr [0-100]\n" \
+				"save\n" \
 				"net [cmd] [param]\n" \
 				"  e.g. net address	192.168.21.33\n" \
 				"  e.g. net netmask 255.255.255.0\n" \
@@ -542,13 +628,45 @@ void *udp_command_listener(void *arg) {
 					}
 				}
 			}
+		} else if (strncmp(buffer, "thr", 3) == 0) {
+			if (buffer[3] != ' ') {
+				if (configParams_get("muteMicLv", buffer, sizeof(buffer)) == 0) {
+					sendto(sock, buffer, strlen(buffer), 0,
+					    (struct sockaddr *)&client_addr, addr_len);
+					printf("Current muteMicLv: %d\n", atoi(buffer));
+				}
+				else {
+					const char *msg = "ERR:Failed to get muteMicLv\n";
+					sendto(sock, msg, strlen(msg), 0,
+					    (struct sockaddr *)&client_addr, addr_len);
+				}
+			}
+			else {
+				char *value = buffer + 4;
+				int threshold = atoi(value);
+				if (threshold >= 0 && threshold <= 100) {
+					char strbuf[6];
+					snprintf(strbuf, sizeof(strbuf), "%d", threshold);
+					if (configParams_set("muteMicLv", strbuf) == 0) {
+						const char *msg = "OK\n";
+						sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+						printf("Set muteMicLv to: %d\n", threshold);
+					}
+					else {
+						const char *msg = "ERR:Failed to save muteMicLv\n";
+						sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+					}
+				}
+				else {
+					const char *msg = "ERR:Threshold must be between 0-100\n";
+					sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+				}
+			}
 		} else {
 			const char *unknown_cmd = "Unknown command\n";
-			sendto(sock, unknown_cmd, strlen(unknown_cmd), 0,
-			    (struct sockaddr *)&client_addr, addr_len);
+			sendto(sock, unknown_cmd, strlen(unknown_cmd), 0, (struct sockaddr *)&client_addr, addr_len);
 		}
 	}
-
 	return NULL;
 }
 
@@ -558,6 +676,9 @@ int init_udp_terminal() {
 		printf("Failed to initialize UDP terminal\n");
 		return -1;
 	}
+
+	// 파라메터값 로드
+	configParams_load();
 
 	pthread_t thread_id;
 	if (pthread_create(&thread_id, NULL, udp_command_listener, NULL) != 0) {
