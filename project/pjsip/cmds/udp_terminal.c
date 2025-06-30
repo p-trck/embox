@@ -533,10 +533,11 @@ void *udp_command_listener(void *arg) {
 			const char *msg = "DO:Wait saving..\n";
 			sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr,
 			    addr_len);
+			clock_t tick = clock();
 			if (configParams_save() == 0) {
 				const char *msg = "OK:Saved params\n";
 				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
-				printf("Configuration saved successfully.\n");
+				printf("Configuration saved successfully. (%ld)\n", (clock() - tick) * 1000 / CLOCKS_PER_SEC);
 			}
 			else {
 				const char *msg = "ERR:Failed to save params\n";
@@ -581,11 +582,32 @@ void *udp_command_listener(void *arg) {
 				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
 			}
 		}
+		else if (strncmp(buffer, "factorydefault", 14) == 0) {
+			const char *msg = "DO:Wait restoring factory default..\n";
+			sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+
+			for(int i = 0; i < CONFIGPARAM_MAX; i++) {
+				configParams_set(configParams[i].name, configParams[i].default_data);
+			}
+
+			if(0 == configParams_save())
+			{
+				const char *msg = "OK:Restored factory default\n";
+				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+				printf("Factory default restored successfully.\n");
+			}
+			else {
+				const char *msg = "ERR:Failed to restore factory default\n";
+				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+				printf("Failed to restore factory default.\n");
+			}
+		}
 		else if (strncmp(buffer, "help", 4) == 0) {
 			const char *msg = "Usage:\n"
 				"vol [0-100]\n" \
 				"thr [0-100]\n" \
 				"save\n" \
+				"factorydefault\n" \
 				"net [cmd] [param]\n" \
 				"  e.g. net address	192.168.21.33\n" \
 				"  e.g. net netmask 255.255.255.0\n" \
