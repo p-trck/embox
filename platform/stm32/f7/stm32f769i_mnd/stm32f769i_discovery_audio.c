@@ -123,6 +123,10 @@ EndDependencies */
 
 /* Includes ------------------------------------------------------------------*/
 #include "stm32f769i_discovery_audio.h"
+//#define TR_MIC
+#define TL_MIC
+#define VAL_REDUCE_MIC_INPUT 0
+//#define VAL_REDUCE_MIC_INPUT 0x0ba0
 
 /** @addtogroup BSP
   * @{
@@ -240,8 +244,13 @@ static uint16_t                 AudioIn_Device = INPUT_DEVICE_DIGITAL_MIC;
 /* Buffers status flags */
 static uint32_t                DmaTopLeftRecHalfCplt  = 0;
 static uint32_t                DmaTopLeftRecCplt      = 0;
+#ifdef TR_MIC
 static uint32_t                DmaTopRightRecHalfCplt = 0;
 static uint32_t                DmaTopRightRecCplt     = 0;
+#else
+static uint32_t                DmaTopRightRecHalfCplt = 1;
+static uint32_t                DmaTopRightRecCplt     = 1;
+#endif
 static uint32_t                DmaButtomLeftRecHalfCplt  = 0;
 static uint32_t                DmaButtomLeftRecCplt      = 0;
 static uint32_t                DmaButtomRightRecHalfCplt = 0;
@@ -1040,7 +1049,11 @@ static void SAIx_In_Init(uint32_t AudioFreq)
   /* Configure SAI_Block_x
   LSBFirst: Disabled
   DataSize: 16 */
+  #ifdef TR_MIC
   haudio_in_sai.Init.MonoStereoMode = SAI_STEREOMODE;
+  #else
+  haudio_in_sai.Init.MonoStereoMode = SAI_MONOMODE;
+  #endif
   haudio_in_sai.Init.AudioFrequency = AudioFreq;
   haudio_in_sai.Init.AudioMode      = SAI_MODESLAVE_RX;
   haudio_in_sai.Init.NoDivider      = SAI_MASTERDIVIDER_ENABLE;
@@ -1251,10 +1264,12 @@ uint8_t BSP_AUDIO_IN_Record(uint16_t* pbuf, uint32_t size)
     }
 
     /* Call the Media layer start function for top right channel */
+#ifdef TR_MIC
     if(HAL_OK != HAL_DFSDM_FilterRegularStart_DMA(&hAudioInTopRightFilter, pScratchBuff[0], ScratchSize))
     {
       return AUDIO_ERROR;
     }
+#endif
     
     /* Call the Media layer start function for top left channel */
     if(HAL_OK != HAL_DFSDM_FilterRegularStart_DMA(&hAudioInTopLeftFilter, pScratchBuff[1], ScratchSize))
@@ -1391,12 +1406,13 @@ uint8_t BSP_AUDIO_IN_Resume(void)
       return AUDIO_ERROR;
     }
   } 
+#ifdef TR_MIC
   /* Call the Media layer start function for top right channel */
   if(HAL_OK != HAL_DFSDM_FilterRegularStart_DMA(&hAudioInTopRightFilter, pScratchBuff[0], ScratchSize))
   {
     return AUDIO_ERROR;
   }
-  
+#endif
   /* Call the Media layer start function for top left channel */
   if(HAL_OK != HAL_DFSDM_FilterRegularStart_DMA(&hAudioInTopLeftFilter, pScratchBuff[1], ScratchSize))
   {
@@ -1477,12 +1493,18 @@ void HAL_DFSDM_FilterRegConvCpltCallback(DFSDM_Filter_HandleTypeDef *hdfsdm_filt
     {    
       for(index = (ScratchSize/2) ; index < ScratchSize; index++)
       {
-        hAudioIn.pRecBuf[AppBuffTrigger]     = (uint16_t)(SaturaLH((pScratchBuff[1][index] >> 8), -32760, 32760));
+        hAudioIn.pRecBuf[AppBuffTrigger]     = (uint16_t)((SaturaLH((pScratchBuff[1][index] >> 8), -32760, 32760)) - VAL_REDUCE_MIC_INPUT);
+#ifdef TR_MIC
         hAudioIn.pRecBuf[AppBuffTrigger + 1] = (uint16_t)(SaturaLH((pScratchBuff[0][index] >> 8), -32760, 32760));
+#else
+        hAudioIn.pRecBuf[AppBuffTrigger + 1] = 0;
+#endif
         AppBuffTrigger +=2;
       }
       DmaTopLeftRecCplt  = 0;
-      DmaTopRightRecCplt = 0;  
+#ifdef TR_MIC
+      DmaTopRightRecCplt = 0;
+#endif
     }
   }
   
@@ -1553,12 +1575,18 @@ void HAL_DFSDM_FilterRegConvHalfCpltCallback(DFSDM_Filter_HandleTypeDef *hdfsdm_
     {    
       for(index = 0 ; index < ScratchSize/2; index++)
       {
-        hAudioIn.pRecBuf[AppBuffTrigger]     = (uint16_t)(SaturaLH((pScratchBuff[1][index] >> 8), -32760, 32760));
+        hAudioIn.pRecBuf[AppBuffTrigger]     = (uint16_t)((SaturaLH((pScratchBuff[1][index] >> 8), -32760, 32760)) - VAL_REDUCE_MIC_INPUT);
+#ifdef TR_MIC
         hAudioIn.pRecBuf[AppBuffTrigger + 1] = (uint16_t)(SaturaLH((pScratchBuff[0][index] >> 8), -32760, 32760));
+#else
+        hAudioIn.pRecBuf[AppBuffTrigger + 1] = 0;
+#endif
         AppBuffTrigger +=2;
       }
       DmaTopLeftRecHalfCplt  = 0;
-      DmaTopRightRecHalfCplt = 0;  
+#ifdef TR_MIC
+      DmaTopRightRecHalfCplt = 0;
+#endif
     }
   }
   
@@ -1739,6 +1767,7 @@ static uint8_t DFSDMx_Init(uint32_t AudioFreq)
   /****************************************************************************/ 
   /********************** Channels configuration  *****************************/
   /****************************************************************************/ 
+#ifdef TL_MIC
   /* CHANNEL 5 configuration */
   __HAL_DFSDM_CHANNEL_RESET_HANDLE_STATE(&hAudioInTopLeftChannel);  
   hAudioInTopLeftChannel.Instance                      = DFSDM1_Channel5;  
@@ -1760,7 +1789,8 @@ static uint8_t DFSDMx_Init(uint32_t AudioFreq)
   {
     return AUDIO_ERROR;
   }
-  
+#endif
+#ifdef TR_MIC
   /* CHANNEL 4 configuration */
   __HAL_DFSDM_CHANNEL_RESET_HANDLE_STATE(&hAudioInTopRightChannel);  
   hAudioInTopRightChannel.Instance                      = DFSDM1_Channel4;  
@@ -1782,7 +1812,7 @@ static uint8_t DFSDMx_Init(uint32_t AudioFreq)
   {
     return AUDIO_ERROR;
   }
-  
+#endif
   if(AudioIn_ChannelNumber > 2)
   {  
     /* CHANNEL 5 configuration */
@@ -1833,6 +1863,7 @@ static uint8_t DFSDMx_Init(uint32_t AudioFreq)
   /********************** Filters configuration  ******************************/
   /****************************************************************************/
   
+#ifdef TL_MIC
   /* FILTER 0 configuration */
   __HAL_DFSDM_FILTER_RESET_HANDLE_STATE(&hAudioInTopLeftFilter);
   hAudioInTopLeftFilter.Instance                          = AUDIO_DFSDMx_TOP_LEFT_FILTER;  
@@ -1858,7 +1889,8 @@ static uint8_t DFSDMx_Init(uint32_t AudioFreq)
   {
     return AUDIO_ERROR;
   }
-  
+#endif
+#ifdef TR_MIC
   /* FILTER 1 configuration */
   __HAL_DFSDM_FILTER_RESET_HANDLE_STATE(&hAudioInTopRightFilter);
   hAudioInTopRightFilter.Instance                          = AUDIO_DFSDMx_TOP_RIGHT_FILTER;
@@ -1883,7 +1915,7 @@ static uint8_t DFSDMx_Init(uint32_t AudioFreq)
   {
     return AUDIO_ERROR;
   } 
-  
+#endif
   if(AudioIn_ChannelNumber > 2)
   {
     /* FILTER 2 configuration */
@@ -1958,15 +1990,18 @@ static uint8_t DFSDMx_DeInit(void)
   }
   
   /* De-initializes the DFSDM channels to allow access to DFSDM internal registers */
+#ifdef TL_MIC
   if(HAL_OK != HAL_DFSDM_ChannelDeInit(&hAudioInTopLeftChannel))
   {
     return AUDIO_ERROR;
   }
-  
+#endif
+  #ifdef TR_MIC
   if(HAL_OK != HAL_DFSDM_ChannelDeInit(&hAudioInTopRightChannel))
   {
     return AUDIO_ERROR;
   }
+  #endif
 
   if(AudioIn_ChannelNumber > 2)
   {
