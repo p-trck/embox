@@ -138,7 +138,7 @@ int proc_testMIC() {
             #endif
             snprintf(msgbuf, MSG_BUFFER_SIZE, " %-4d RMS", lv);
 			send_message(msgbuf);
-            received_bytes = recv_message(buffer, SIZEOF_RXBUFFER, 100);
+            received_bytes = recv_message(buffer, SIZEOF_RXBUFFER, 1000);
             if (received_bytes > 0) {
                 printf("Received message: %s\n", buffer);
                 if (strcmp(buffer, "stop") == 0) {
