@@ -6,8 +6,6 @@ PKG_SOURCES := https://github.com/pjsip/pjproject/archive/$(PKG_VER).zip
 PKG_MD5     := ec8e45c13d6b8a578612dabf98382141
 #PKG_MD5     := 366507f2e5fb3a3bf8baf41ccbbdd667
 
-include $(EXTBLD_LIB)
-
 PKG_PATCHES := pjproject.patch \
                tests.patch g711.silence.patch
 
@@ -27,7 +25,7 @@ ifeq ($(PJSIP_ENABLE_CXX),false)
 DISABLE_FEATURES += pjsua2
 endif
 
-BUILD_ROOT  := $(BUILD_DIR)/$(PKG_NAME)-$(PKG_VER)
+BUILD_ROOT  := $(MOD_BUILD_DIR)/$(PKG_NAME)-$(PKG_VER)
 PJSIP_INSTALL_DIR := $(EXTERNAL_BUILD_DIR)/third_party/pjproject/core/install
 
 $(CONFIGURE) :

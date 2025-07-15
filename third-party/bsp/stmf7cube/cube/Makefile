@@ -16,5 +16,3 @@ PKG_PATCHES := sd_read_1_17_1.patch
 PKG_PATCHES += mnd_audio.patch wm8994.patch
 
 PKG_SOURCES := https://github.com/STMicroelectronics/STM32CubeF7/archive/refs/tags/$(PKG_VER).zip
-
-include $(EXTBLD_LIB)
