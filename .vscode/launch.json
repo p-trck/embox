@@ -1,0 +1,39 @@
+{
+    // IntelliSense를 사용하여 가능한 특성에 대해 알아보세요.
+    // 기존 특성에 대한 설명을 보려면 가리킵니다.
+    // 자세한 내용을 보려면 https://go.microsoft.com/fwlink/?linkid=830387을(를) 방문하세요.
+    "version": "0.2.0",
+    "configurations": [
+		{
+			"name": "GDB-REMOTE-EMBOX",
+			"type": "cppdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/build/base/bin/embox",
+			"miDebuggerServerAddress": "172.30.1.32:61234",
+			"miDebuggerPath": "/usr/bin/gdb-multiarch",
+			"args": [],
+			"stopAtEntry": true,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"externalConsole": true,
+			"MIMode": "gdb",
+            "setupCommands": [
+                {
+                    "description": "path 재지정",
+                    "text": "set substitute-path /embox /",
+                    "ignorefailures": true
+                }
+            ],
+        },
+        {
+            "name": "Cortex Debug",
+            "cwd": "${workspaceFolder}",
+            "executable": "./bin/executable.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "runToEntryPoint": "main",
+            "servertype": "stlink"
+        }
+        
+    ]
+}
