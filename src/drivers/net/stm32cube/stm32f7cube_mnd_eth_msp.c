@@ -51,6 +51,22 @@ void HAL_ETH_MspInit(ETH_HandleTypeDef *heth) {
 	 RMII_MII_TXD1 ---------------------> PB13
 	 */
 
+#if 1
+	 // reset pin
+	GPIO_InitStructure.Mode  = GPIO_MODE_OUTPUT_PP;
+	GPIO_InitStructure.Pull  = GPIO_PULLUP;
+	GPIO_InitStructure.Speed = GPIO_SPEED_FAST;
+	GPIO_InitStructure.Pin   = GPIO_PIN_6;
+	__HAL_RCC_GPIOA_CLK_ENABLE();
+	HAL_GPIO_Init(GPIOA, &GPIO_InitStructure);
+ 
+	//HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
+	//HAL_Delay(10);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_RESET);
+	HAL_Delay(100);
+	HAL_GPIO_WritePin(GPIOA, GPIO_PIN_6, GPIO_PIN_SET);
+	HAL_Delay(100);
+#endif
 	GPIO_InitStructure.Speed = GPIO_SPEED_HIGH;
 	GPIO_InitStructure.Mode = GPIO_MODE_AF_PP;
 	GPIO_InitStructure.Pull = GPIO_NOPULL;
