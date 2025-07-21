@@ -61,7 +61,7 @@ static void low_level_init(unsigned char mac[6]) {
 	stm32_eth_handler.Instance = (ETH_TypeDef *) ETH_BASE;
 	/* Fill ETH_InitStructure parametrs */
 	stm32_eth_handler.Init.MACAddr = mac;
-	stm32_eth_handler.Init.AutoNegotiation = ETH_AUTONEGOTIATION_DISABLE;
+	stm32_eth_handler.Init.AutoNegotiation = ETH_AUTONEGOTIATION_ENABLE;
 	stm32_eth_handler.Init.Speed = ETH_SPEED_100M;
 	stm32_eth_handler.Init.DuplexMode = ETH_MODE_FULLDUPLEX;
 	stm32_eth_handler.Init.MediaInterface = ETH_MEDIA_INTERFACE_RMII;
@@ -69,14 +69,27 @@ static void low_level_init(unsigned char mac[6]) {
 	stm32_eth_handler.Init.PhyAddress = PHY_ADDRESS;
 	stm32_eth_handler.Init.RxMode = ETH_RXINTERRUPT_MODE;
 
-
-	if (HAL_OK != HAL_ETH_Init(&stm32_eth_handler)) {
+	uint32_t tickstart = HAL_GetTick();
+	#define TIMEOUT_ETH_INIT 5000
+	while (HAL_OK != HAL_ETH_Init(&stm32_eth_handler)) {
 		log_error("HAL_ETH_Init error\n");
+		if(tickstart + TIMEOUT_ETH_INIT > HAL_GetTick()) {
+			log_error("Timeout while waiting for HAL_ETH_Init\n");
+			log_error("Resetting system...\n");
+			HAL_Delay(100);
+			HAL_NVIC_SystemReset();
+			return;
+		}
+		HAL_Delay(500);
 	}
 
 	if (stm32_eth_handler.State == HAL_ETH_STATE_READY) {
 		log_info("STATE_READY sp %d duplex %d\n",
 			stm32_eth_handler.Init.Speed, stm32_eth_handler.Init.DuplexMode);
+	}
+	else
+	{
+		log_info("STATE NOT READY\n");
 	}
 
 	/*(#)Initialize Ethernet DMA Descriptors in chain mode and point to allocated buffers:*/
