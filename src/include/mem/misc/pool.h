@@ -74,7 +74,7 @@ struct pool {
 		object_type object;                                              \
 		struct slist_link free_link;                                     \
 	} __pool_storage##name[size] attr                                    \
-	    __attribute__((section(".bss..reserve.pool,\"aw\",%nobits;#"))); \
+	    __attribute__((section(".thread_heap_section.pool2,\"aw\",%nobits;#"))); \
 	static struct pool name = {                                          \
 	    .memory = __pool_storage##name,                                  \
 	    .bound_free = __pool_storage##name,                              \
