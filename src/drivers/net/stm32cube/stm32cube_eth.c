@@ -69,18 +69,20 @@ static void low_level_init(unsigned char mac[6]) {
 	stm32_eth_handler.Init.PhyAddress = PHY_ADDRESS;
 	stm32_eth_handler.Init.RxMode = ETH_RXINTERRUPT_MODE;
 
-	uint32_t tickstart = HAL_GetTick();
-	#define TIMEOUT_ETH_INIT 5000
+	#define TIMEOUT_ETH_INIT 10000
+
+	uint32_t tickTimeout = HAL_GetTick() + TIMEOUT_ETH_INIT;
 	while (HAL_OK != HAL_ETH_Init(&stm32_eth_handler)) {
 		log_error("HAL_ETH_Init error\n");
-		if(tickstart + TIMEOUT_ETH_INIT > HAL_GetTick()) {
+		if(tickTimeout < HAL_GetTick()) {
 			log_error("Timeout while waiting for HAL_ETH_Init\n");
 			log_error("Resetting system...\n");
 			HAL_Delay(100);
 			HAL_NVIC_SystemReset();
 			return;
 		}
-		HAL_Delay(500);
+		log_info("Retry: remain : %d msec", tickTimeout - HAL_GetTick());
+		HAL_Delay(100);
 	}
 
 	if (stm32_eth_handler.State == HAL_ETH_STATE_READY) {
