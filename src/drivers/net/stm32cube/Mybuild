@@ -67,7 +67,7 @@ module stm32f7cube_mnd_eth {
 	@IncludeExport(path="drivers/net", target_name="stm32cube_eth.h")
 	source "stm32f7cube_eth.h"
 
-	option number log_level=1
+	option string log_level="LOG_ERR"
 	depends embox.net.skbuff
 	depends embox.net.l2.ethernet
 	depends embox.kernel.irq_api

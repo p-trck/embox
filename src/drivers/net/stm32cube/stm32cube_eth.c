@@ -61,7 +61,7 @@ static void low_level_init(unsigned char mac[6]) {
 	stm32_eth_handler.Instance = (ETH_TypeDef *) ETH_BASE;
 	/* Fill ETH_InitStructure parametrs */
 	stm32_eth_handler.Init.MACAddr = mac;
-	stm32_eth_handler.Init.AutoNegotiation = ETH_AUTONEGOTIATION_ENABLE;
+	stm32_eth_handler.Init.AutoNegotiation = ETH_AUTONEGOTIATION_DISABLE;
 	stm32_eth_handler.Init.Speed = ETH_SPEED_100M;
 	stm32_eth_handler.Init.DuplexMode = ETH_MODE_FULLDUPLEX;
 	stm32_eth_handler.Init.MediaInterface = ETH_MEDIA_INTERFACE_RMII;
