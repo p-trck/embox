@@ -75,8 +75,9 @@ int main(int argc, char **argv) {
 	unsigned char mac[18], hw_addr[ETH_ALEN];
 	struct timeval t1, t2, sub_res;
 	int ret, microseconds, milliseconds;
+	char use_localip = 0;
 
-	while (-1 != (opt = getopt(argc, argv, "I:c:h"))) {
+	while (-1 != (opt = getopt(argc, argv, "I:c:hl"))) {
 		switch (opt) {
 		case 'I': /* get interface */
 			if_name = optarg;
@@ -86,6 +87,10 @@ int main(int argc, char **argv) {
 				printf("arping: bad number of packets to transmit.\n");
 				return -EINVAL;
 			}
+			break;
+		case 'l':
+			use_localip = 1;
+			printf("arping: using local IP address as source\n");
 			break;
 		case '?':
 			printf("Invalid option `-%c'\n", optopt);
@@ -115,7 +120,10 @@ int main(int argc, char **argv) {
 	}
 
 	/* Get destination address. */
-	if (0 == inet_aton(argv[argc - 1], &dst)) {
+	if(use_localip) {
+		dst.s_addr = in_dev->ifa_address;
+	}
+	else if (0 == inet_aton(argv[argc - 1], &dst)) {
 		printf("arping: invalid IP address: %s\n", argv[argc - 1]);
 		return -EINVAL;
 	}
