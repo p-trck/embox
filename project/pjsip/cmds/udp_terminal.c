@@ -455,6 +455,42 @@ void printNetInfo(int sock, struct sockaddr_in *client_addr, socklen_t addr_len)
 	}
 }
 
+int copy_file(const char *src_path, const char *dst_path) {
+	FILE *src = fopen(src_path, "r");
+	if (!src) {
+		perror("Failed to open source file");
+		return -1;
+	}
+
+	FILE *dst = fopen(dst_path, "w");
+	if (!dst) {
+		perror("Failed to open destination file");
+		fclose(src);
+		return -1;
+	}
+
+	char buf[256];
+	size_t n;
+	while ((n = fread(buf, 1, sizeof(buf), src)) > 0) {
+		if (fwrite(buf, 1, n, dst) != n) {
+			perror("Write error");
+			fclose(src);
+			fclose(dst);
+			return -1;
+		}
+	}
+
+	fclose(src);
+	fclose(dst);
+	return 0;
+}
+
+int netconfig_restore()
+{
+	// /network 파일을 /conf/network로 복사
+	return copy_file("/network", "/conf/network");
+}
+
 void *udp_command_listener(void *arg) {
 	char buffer[64];
 	struct sockaddr_in client_addr;
@@ -592,9 +628,17 @@ void *udp_command_listener(void *arg) {
 
 			if(0 == configParams_save())
 			{
-				const char *msg = "OK:Restored factory default\n";
-				sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
-				printf("Factory default restored successfully.\n");
+				if(netconfig_restore() != 0) {
+					const char *msg = "ERR:Failed to restore network config\n";
+					sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+					printf("Failed to restore network config.\n");
+				}
+				else
+				{
+					const char *msg = "OK:Restored factory default\n";
+					sendto(sock, msg, strlen(msg), 0, (struct sockaddr *)&client_addr, addr_len);
+					printf("Factory default restored successfully.\n");
+				}
 			}
 			else {
 				const char *msg = "ERR:Failed to restore factory default\n";
